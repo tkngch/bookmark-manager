@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bookmark Manager</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-dark bg-dark" id="navbar-top">
+      <a class="navbar-brand" id="navbar-top-title" href="/"> </a>
+      <span class="navbar-text" id="navbar-top-text"> </span>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-2" id="side-panel">
+        </div>
+        <div class="col-md-9">
+          <div id="main-panel"> </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="tagEditModal" tabindex="-1" aria-labelledby="tagEditModalLabel" aria-modal="true" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header" id="tagEditModalHeader"> </div>
+          <div class="modal-body" id="tagEditModalBody"> </div>
+          <!-- <div class="modal-footer" id="tagEditModalFooter"> </div> -->
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show" id="backdrop" style="display: none;"></div>
+
+    <div class="modal fade" id="bookmarkTagsEditModal" tabindex="-1" aria-labelledby="bookmarkTagsEditModalLabel" aria-modal="true" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header" id="bookmarkTagsEditModalHeader"> </div>
+          <div class="modal-body" id="bookmarkTagsEditModalBody"> </div>
+          <!-- <div class="modal-footer" id="bookmarkTagsEditModalFooter"> </div> -->
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop fade show" id="backdrop" style="display: none;"></div>
+
+    <script src="output.js"></script>
+  </body>
+</html>
