@@ -11,16 +11,10 @@ To reduce clutter, tags are categorised into primary and secondary. Primary tags
 are shown by default on the side pane, and secondary tags are shown only after
 "Show More" is clicked.
 
-## TODO
-
-- Make "New Addition" tag to be selected by default.
-- Drop the seeding for development.
-- Tests for kotlin/js parts.
-
 ## Planned features
 
 - Publication of binary package.
-- Scoring feature, to indicate how like a bookmark is predicted to be visited.
+- Scoring feature, to predict how likely it is for a bookmark to be visited.
 
 ## Not in the plan
 

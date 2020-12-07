@@ -29,22 +29,22 @@ class BookmarkServiceImpl(
 
     init {
         // Tags
-        tagsView.binder.onAdd.subscribe {
+        this.tagsView.binder.onAdd.subscribe {
             tagName: TagName, visibility: Visibility ->
             this.bookmarkRepository.createTag(tagName, visibility).then {
                 this.fetchAndShowTags()
             }
         }
-        tagsView.binder.onUpdate.subscribe {
+        this.tagsView.binder.onUpdate.subscribe {
             tag: Tag, newVisibility: Visibility ->
             this.bookmarkRepository.updateTag(tag.id, tag.name, newVisibility).then {
                 this.fetchAndShowTags()
             }
         }
 
-        tagsView.binder.onClick.subscribe { this.fetchAndShowBookmarks() }
+        this.tagsView.binder.onClick.subscribe { this.fetchAndShowBookmarks() }
 
-        tagsView.binder.onDelete.subscribe { tagToDelete ->
+        this.tagsView.binder.onDelete.subscribe { tagToDelete ->
             this.bookmarkRepository.deleteTag(tagToDelete.id).then {
                 this.tagsView.selectedTags.removeAll { tag -> tag.id == tagToDelete.id }
                 this.fetchAndShowTags()
@@ -52,46 +52,44 @@ class BookmarkServiceImpl(
             }
         }
 
-        tagsView.binder.onClickShowMore.subscribe {
+        this.tagsView.binder.onClickShowMore.subscribe {
             this.isHiddenTagsVisible = true
             this.tagsView.render(this.tags, this.isHiddenTagsVisible)
         }
 
-        tagsView.binder.onClickShowLess.subscribe {
+        this.tagsView.binder.onClickShowLess.subscribe {
             this.isHiddenTagsVisible = false
             this.tagsView.render(this.tags, this.isHiddenTagsVisible)
         }
 
         // bookmarks
-        bookmarksView.binder.onAdd.subscribe { url ->
+        this.bookmarksView.binder.onAdd.subscribe { url ->
             this.getTagForNewBookmark().then { tag ->
                 this.bookmarkRepository.createBookmark(
                     url,
                     listOf(tag) + this.tagsView.selectedTags.toList()
                 )
-            }.then {
-                this.fetchAndShowBookmarks()
-            }
+            }.then { this.fetchAndShowBookmarks() }
         }
 
-        bookmarksView.binder.onClick.subscribe { bookmark ->
+        this.bookmarksView.binder.onClick.subscribe { bookmark ->
             this.bookmarkRepository.logBookmarkVisit(bookmark.id)
         }
-        bookmarksView.binder.onClick.subscribe { bookmark ->
+        this.bookmarksView.binder.onClick.subscribe { bookmark ->
             window.open(bookmark.url, "_blank")
         }
 
-        bookmarksView.binder.onDelete.subscribe { bookmark ->
+        this.bookmarksView.binder.onDelete.subscribe { bookmark ->
             this.bookmarkRepository.deleteBookmark(bookmark.id).then {
                 this.fetchAndShowBookmarks()
             }
         }
-        bookmarksView.binder.onTagAdd.subscribe { bookmark, tag ->
+        this.bookmarksView.binder.onTagAdd.subscribe { bookmark, tag ->
             this.bookmarkRepository.addTagsToBookmark(bookmark.id, listOf(tag.id)).then {
                 this.fetchAndShowBookmarks()
             }
         }
-        bookmarksView.binder.onTagDrop.subscribe { bookmark, tag ->
+        this.bookmarksView.binder.onTagDrop.subscribe { bookmark, tag ->
             this.bookmarkRepository.dropTagsFromBookmark(bookmark.id, listOf(tag.id)).then {
                 this.fetchAndShowBookmarks()
             }
@@ -131,10 +129,12 @@ class BookmarkServiceImpl(
         }
 
     override fun run() {
-        this.seed()
+        this.fetchAndShowTags().then { this.getTagForNewBookmark() }.then { tag ->
+            this.tagsView.selectedTags.add(tag)
+        }.then {
+            this.fetchAndShowBookmarks()
+        }
         this.userRepository.getUsername().then { this.panelView.render(it) }
-        this.fetchAndShowTags()
-        this.fetchAndShowBookmarks()
     }
 
     private fun seed() {
