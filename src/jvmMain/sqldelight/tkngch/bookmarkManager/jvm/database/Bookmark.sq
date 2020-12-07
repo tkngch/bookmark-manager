@@ -1,0 +1,233 @@
+
+CREATE TABLE bookmark (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL,
+    url TEXT NOT NULL,
+    title TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    UNIQUE(username, url)
+);
+
+
+CREATE TABLE tag (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL,
+    name TEXT NOT NULL,
+    visibility TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    UNIQUE(username, name)
+);
+
+
+CREATE TABLE bookmarkTag (
+    bookmarkId TEXT NOT NULL,
+    tagId TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    PRIMARY KEY(bookmarkId, tagId),
+    FOREIGN KEY(bookmarkId) REFERENCES bookmark(id) ON DELETE CASCADE,
+    FOREIGN KEY(tagId) REFERENCES tag(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE bookmarkVisitLog(
+    username TEXT NOT NULL,
+    bookmarkId TEXT NOT NULL,
+    visitedAt TEXT NOT NULL,
+    PRIMARY KEY (username, visitedAt)
+);
+
+
+-- QUERIES
+
+selectBookmarksWithoutTags:
+    SELECT id AS bookmarkId, url, title, "" AS tags, createdAt
+    FROM bookmark
+    WHERE username = :username
+        AND id NOT IN (
+            SELECT bookmarkId FROM bookmarkTag
+            WHERE tagId IN (SELECT id FROM tag WHERE username = :username)
+        )
+    ORDER BY createdAt DESC
+    ;
+
+
+selectBookmarksByTags:
+    WITH bookmarkIDsWithTags AS (
+        SELECT bookmarkTag.bookmarkId AS bookmarkId
+            , tag.id AS tagId
+            , tag.name AS name
+            , tag.visibility AS visibility
+            , printf('{"id": "%s", "name": "%s", "visibility": "%s", "createdAt": "%s"}', tag.id, tag.name, tag.visibility, tag.createdAt) AS tagAsJson
+        FROM bookmarkTag
+        LEFT JOIN tag ON bookmarkTag.tagId = tag.id
+        WHERE tag.username = :username
+    ),
+    relevantBookmarkIDs AS (
+        SELECT bookmarkId, COUNT(tagId) AS nMatchingTags
+        FROM bookmarkTag
+        WHERE tagId IN :tagIds
+        GROUP BY bookmarkId
+    )
+    SELECT
+        tagged.id AS bookmarkId
+        , tagged.url AS url
+        , tagged.title AS title
+        , tagged.createdAt AS createdAt
+        , GROUP_CONCAT(bookmarkIDsWithTags.tagAsJson, :sep) AS tags
+    FROM bookmarkIDsWithTags
+        INNER JOIN bookmark AS tagged ON bookmarkIDsWithTags.bookmarkId = tagged.id
+    WHERE
+        tagged.id IN (SELECT bookmarkId FROM relevantBookmarkIDs WHERE nMatchingTags >= :requiredNTagMatches)
+    GROUP BY tagged.id
+    ORDER BY tagged.createdAt DESC
+    ;
+
+
+selectBookmarkById:
+    WITH tagless AS (
+        SELECT id, url, title, createdAt
+        FROM bookmark
+        WHERE username = :username
+            AND id NOT IN (SELECT bookmarkId FROM bookmarkTag WHERE tagId IN (SELECT id FROM tag WHERE username = :username))
+            AND id = :bookmarkId
+    ),
+    bookmarkIDsWithTags AS (
+        SELECT bookmarkTag.bookmarkId AS bookmarkId
+            , tag.id AS tagId
+            , tag.name AS name
+            , tag.visibility AS visibility
+            , printf('{"id": "%s", "name": "%s", "visibility": "%s", "createdAt": "%s"}', tag.id, tag.name, tag.visibility, tag.createdAt) AS tagAsJson
+        FROM bookmarkTag
+        LEFT JOIN tag ON bookmarkTag.tagId = tag.id
+        WHERE tag.username = :username AND bookmarkTag.bookmarkId = :bookmarkId
+    )
+    SELECT bookmarkId, url, title, tags, createdAt
+    FROM (
+        SELECT tagged.id AS bookmarkId
+            , tagged.url AS url
+            , tagged.title AS title
+            , tagged.createdAt AS createdAt
+            , GROUP_CONCAT(bookmarkIDsWithTags.tagAsJson, :sep) AS tags
+        FROM bookmarkIDsWithTags
+            INNER JOIN bookmark AS tagged ON bookmarkIDsWithTags.bookmarkId = tagged.id
+        GROUP BY tagged.id
+        UNION
+        SELECT tagless.id AS bookmarkId
+            , tagless.url AS url
+            , tagless.title AS title
+            , tagless.createdAt AS createdAt
+            , "" AS tags
+        FROM tagless
+    )
+    ;
+
+
+-- selectBookmarks:
+--     WITH tagless AS (
+--         SELECT id, url, title, createdAt
+--         FROM bookmark
+--         WHERE username = :username
+--             AND id NOT IN (SELECT bookmarkId FROM bookmarkTag WHERE tagId IN (SELECT id FROM tag WHERE username = :username))
+--     ),
+--     bookmarkIDsWithTags AS (
+--         SELECT bookmarkTag.bookmarkId AS bookmarkId
+--             , tag.id AS tagId
+--             , tag.name AS name
+--             , tag.visibility AS visibility
+--             , printf('{"id": "%s", "name": "%s", "visibility": "%s", "createdAt": "%s"}', tag.id, tag.name, tag.visibility, tag.createdAt) AS tagAsJson
+--         FROM bookmarkTag
+--         LEFT JOIN tag ON bookmarkTag.tagId = tag.id
+--         WHERE tag.username = :username
+--     )
+--     SELECT bookmarkId, url, title, tags, createdAt
+--     FROM (
+--         SELECT tagged.id AS bookmarkId
+--             , tagged.url AS url
+--             , tagged.title AS title
+--             , tagged.createdAt AS createdAt
+--             , GROUP_CONCAT(bookmarkIDsWithTags.tagAsJson, :sep) AS tags
+--         FROM bookmarkIDsWithTags
+--             INNER JOIN bookmark AS tagged ON bookmarkIDsWithTags.bookmarkId = tagged.id
+--         GROUP BY tagged.id
+--         UNION
+--         SELECT tagless.id AS bookmarkId
+--             , tagless.url AS url
+--             , tagless.title AS title
+--             , tagless.createdAt AS createdAt
+--             , "" AS tags
+--         FROM tagless
+--     )
+--     ORDER BY createdAt DESC
+--     ;
+
+
+selectTags:
+    SELECT id, name, visibility, createdAt
+    FROM tag
+    WHERE username = :username AND (:tagId IS NULL OR id = :tagId)
+    ;
+
+
+-- MUTATIONS
+
+insertNewBookmark:
+    INSERT INTO bookmark (id, username, url, title, createdAt)
+    SELECT :bookmarkId, :username, :url, :title, :createdAt
+    WHERE NOT EXISTS (SELECT 1 FROM bookmark WHERE username = :username AND url = :url)
+    ;
+
+insertNewTag:
+    INSERT INTO tag (id, username, name, visibility, createdAt)
+    SELECT :tagId, :username, :tagName, :visibility, :createdAt
+    WHERE NOT EXISTS (SELECT 1 FROM tag WHERE username = :username AND name = :tagName)
+    ;
+
+insertNewLog:
+    INSERT INTO bookmarkVisitLog (username, bookmarkId, visitedAt)
+    VALUES (:username, :bookmarkId, :visitedAt)
+    ;
+
+
+addTagToBookmark:
+    INSERT INTO bookmarkTag (bookmarkId, tagId, createdAt)
+    SELECT :bookmarkId, :tagId, :createdAt
+    WHERE NOT EXISTS (SELECT 1 FROM bookmarkTag WHERE bookmarkId = :bookmarkId AND tagId = :tagId)
+        AND EXISTS (SELECT 1 FROM bookmark WHERE username = :username AND id = :bookmarkId)
+        AND EXISTS (SELECT 1 FROM tag WHERE username = :username AND id = :tagId)
+    ;
+
+addTagToBookmarkByURL:
+    INSERT INTO bookmarkTag (bookmarkId, tagId, createdAt)
+    SELECT id, :tagId, :createdAt
+    FROM bookmark
+    WHERE
+        username = :username
+        AND url = :url
+        AND NOT EXISTS (SELECT 1 FROM bookmarkTag WHERE bookmarkId IN (SELECT id FROM bookmark WHERE username = :username AND url = :url) AND tagId = :tagId)
+        AND EXISTS (SELECT 1 FROM bookmark WHERE username = :username AND url = :url)
+        AND EXISTS (SELECT 1 FROM tag WHERE username = :username AND id = :tagId)
+    ;
+
+
+dropTagFromBookmark:
+     DELETE FROM bookmarkTag
+     WHERE bookmarkId = :bookmarkId
+         AND tagId = :tagId
+         AND EXISTS (SELECT 1 FROM bookmark WHERE username = :username AND id = :bookmarkId)
+     ;
+
+
+updateTag:
+    UPDATE OR IGNORE tag
+    SET name = :name, visibility = :visibility
+    WHERE username = :username AND id = :id
+    ;
+
+deleteBookmark:
+    DELETE FROM bookmark WHERE username = :username AND id = :bookmarkId
+    ;
+
+deleteTag:
+    DELETE FROM tag
+    WHERE username = :username AND id = :tagId
+    ;
