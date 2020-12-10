@@ -1,10 +1,10 @@
-name: check
+name: build
 on: [push]
 jobs:
-        check:
+        build:
                 runs-on: ubuntu-latest
                 steps:
                         - uses: actions/checkout@master
                         - uses: nanasess/setup-chromedriver@master
-                        - name: Check with Gradle
-                          run: ./gradlew check
+                        - name: Build with Gradle
+                          run: gradlew build

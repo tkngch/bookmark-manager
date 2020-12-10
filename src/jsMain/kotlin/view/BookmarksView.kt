@@ -61,7 +61,7 @@ class BookmarksViewImpl(private val title: String) : BookmarksView {
             div {
                 classes = setOf("form-row")
                 div {
-                    classes = setOf("col-auto")
+                    classes = setOf("col-md-6")
 
                     input {
                         type = InputType.text

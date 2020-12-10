@@ -5,7 +5,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.w3c.fetch.RequestInit
-import tkngch.bookmarkManager.common.config.config
 import tkngch.bookmarkManager.common.model.Bookmark
 import tkngch.bookmarkManager.common.model.BookmarkId
 import tkngch.bookmarkManager.common.model.PayloadBookmarkCreate
@@ -48,20 +47,19 @@ interface BookmarkRepository {
     fun logBookmarkVisit(bookmarkId: BookmarkId): Promise<Unit>
 }
 
-class BookmarkRepositoryImpl(
-    private val apiBaseURL: URL = "http://localhost:${config.port}"
-) : BookmarkRepository {
+class BookmarkRepositoryImpl : BookmarkRepository {
+    private val endpoint = window.location.origin
     private val header = json("Content-Type" to "application/json")
 
     override fun getTags() =
         window.fetch(
-            "${this.apiBaseURL}/api/tag",
+            "${this.endpoint}/api/tag",
             init = RequestInit(method = "GET", headers = header)
         ).then { it.text() }.then { Json.decodeFromString<List<Tag>>(it) }
 
     override fun createTag(tagName: TagName, visibility: Visibility) =
         window.fetch(
-            "${this.apiBaseURL}/api/tag",
+            "${this.endpoint}/api/tag",
             init = RequestInit(
                 method = "POST",
                 headers = header,
@@ -80,7 +78,7 @@ class BookmarkRepositoryImpl(
         updatedVisibility: Visibility
     ) =
         window.fetch(
-            "${this.apiBaseURL}/api/tag",
+            "${this.endpoint}/api/tag",
             init = RequestInit(
                 method = "PUT",
                 headers = header,
@@ -96,7 +94,7 @@ class BookmarkRepositoryImpl(
 
     override fun deleteTag(tagId: TagId) =
         window.fetch(
-            "${this.apiBaseURL}/api/tag",
+            "${this.endpoint}/api/tag",
             init = RequestInit(
                 method = "DELETE",
                 headers = header,
@@ -106,7 +104,7 @@ class BookmarkRepositoryImpl(
 
     override fun getBookmarks(tagIds: List<TagId>) =
         window.fetch(
-            "${this.apiBaseURL}/api/bookmark?${getQueryTags(tagIds)}",
+            "${this.endpoint}/api/bookmark?${getQueryTags(tagIds)}",
             init = RequestInit(
                 method = "GET",
                 headers = header
@@ -118,7 +116,7 @@ class BookmarkRepositoryImpl(
 
     override fun createBookmark(url: URL, tags: List<Tag>) =
         window.fetch(
-            "${this.apiBaseURL}/api/bookmark",
+            "${this.endpoint}/api/bookmark",
             init = RequestInit(
                 method = "POST",
                 headers = header,
@@ -130,7 +128,7 @@ class BookmarkRepositoryImpl(
 
     override fun addTagsToBookmark(bookmarkId: BookmarkId, tags: List<TagId>) =
         window.fetch(
-            "${this.apiBaseURL}/api/bookmark/tag",
+            "${this.endpoint}/api/bookmark/tag",
             init = RequestInit(
                 method = "POST",
                 headers = header,
@@ -148,7 +146,7 @@ class BookmarkRepositoryImpl(
         tags: List<TagId>
     ) =
         window.fetch(
-            "${this.apiBaseURL}/api/bookmark/tag",
+            "${this.endpoint}/api/bookmark/tag",
             init = RequestInit(
                 method = "DELETE",
                 headers = header,
@@ -163,7 +161,7 @@ class BookmarkRepositoryImpl(
 
     override fun deleteBookmark(bookmarkId: BookmarkId) =
         window.fetch(
-            "${this.apiBaseURL}/api/bookmark",
+            "${this.endpoint}/api/bookmark",
             init = RequestInit(
                 method = "DELETE",
                 headers = header,
@@ -175,7 +173,7 @@ class BookmarkRepositoryImpl(
 
     override fun logBookmarkVisit(bookmarkId: BookmarkId) =
         window.fetch(
-            "${this.apiBaseURL}/api/bookmark/visit",
+            "${this.endpoint}/api/bookmark/visit",
             init = RequestInit(
                 method = "POST",
                 headers = header,

@@ -131,16 +131,10 @@ class BookmarkServiceImpl(
     override fun run() {
         this.fetchAndShowTags().then { this.getTagForNewBookmark() }.then { tag ->
             this.tagsView.selectedTags.add(tag)
+            this.tagsView.render(this.tags, this.isHiddenTagsVisible)
         }.then {
             this.fetchAndShowBookmarks()
         }
         this.userRepository.getUsername().then { this.panelView.render(it) }
-    }
-
-    private fun seed() {
-        this.tagsView.binder.onAdd.trigger("News", Visibility.PRIMARY)
-        this.tagsView.binder.onAdd.trigger("Shopping", Visibility.PRIMARY)
-        this.tagsView.binder.onAdd.trigger("Tech", Visibility.SECONDARY)
-        this.bookmarksView.binder.onAdd.trigger("https://kotlinlang.org/")
     }
 }

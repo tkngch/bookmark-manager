@@ -9,8 +9,9 @@ plugins {
 
     application
 }
+
 group = "tkngch"
-version = "0.1"
+version = "1.0"
 
 repositories {
     mavenCentral()
@@ -25,6 +26,7 @@ repositories {
         url = uri("https://dl.bintray.com/kotlin/kotlin-js-wrappers")
     }
 }
+
 kotlin {
     jvm {
         compilations.all {
@@ -87,12 +89,15 @@ kotlin {
         }
     }
 }
+
 application {
-    mainClassName = "tkngch.bookmarkManager.jvm.AppKt"
+    mainClassName = "io.ktor.server.netty.EngineMain"
 }
+
 tasks.getByName<KotlinWebpack>("jsBrowserProductionWebpack") {
     outputFileName = "output.js"
 }
+
 tasks.getByName<Jar>("jvmJar") {
     dependsOn(tasks.getByName("jsBrowserProductionWebpack"))
     val jsBrowserProductionWebpack = tasks.getByName<KotlinWebpack>("jsBrowserProductionWebpack")
@@ -103,6 +108,7 @@ tasks.getByName<Jar>("jvmJar") {
         )
     )
 }
+
 tasks.getByName<JavaExec>("run") {
     dependsOn(tasks.getByName<Jar>("jvmJar"))
     classpath(tasks.getByName<Jar>("jvmJar"))
@@ -135,5 +141,17 @@ ktlint {
 sqldelight {
     database("Database") {
         packageName = "tkngch.bookmarkManager.jvm.database"
+    }
+}
+
+// only necessary until https://youtrack.jetbrains.com/issue/KT-37964 is resolved
+distributions {
+    main {
+        contents {
+            from("$buildDir/libs") {
+                rename("${rootProject.name}-jvm", rootProject.name)
+                into("lib")
+            }
+        }
     }
 }

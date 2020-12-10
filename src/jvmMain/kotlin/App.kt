@@ -5,8 +5,8 @@ import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.auth.Authentication
+import io.ktor.auth.UserHashedTableAuth
 import io.ktor.auth.UserIdPrincipal
-import io.ktor.auth.UserPasswordCredential
 import io.ktor.auth.authenticate
 import io.ktor.auth.authentication
 import io.ktor.auth.basic
@@ -29,17 +29,10 @@ import io.ktor.routing.put
 import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.serialization.json
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import org.kodein.di.DI
 import org.kodein.di.bind
 import org.kodein.di.instance
 import org.kodein.di.singleton
-import tkngch.bookmarkManager.common.config.AppEnv
-import tkngch.bookmarkManager.common.config.config
 import tkngch.bookmarkManager.common.model.PayloadBookmarkCreate
 import tkngch.bookmarkManager.common.model.PayloadBookmarkDelete
 import tkngch.bookmarkManager.common.model.PayloadBookmarkUpdateTags
@@ -48,72 +41,50 @@ import tkngch.bookmarkManager.common.model.PayloadTagCreate
 import tkngch.bookmarkManager.common.model.PayloadTagDelete
 import tkngch.bookmarkManager.common.model.PayloadTagUpdate
 import tkngch.bookmarkManager.common.model.TagId
-import tkngch.bookmarkManager.common.model.Username
 import tkngch.bookmarkManager.jvm.adapter.BookmarkRepository
 import tkngch.bookmarkManager.jvm.adapter.BookmarkRepositoryImpl
 import tkngch.bookmarkManager.jvm.adapter.WebScraping
 import tkngch.bookmarkManager.jvm.adapter.WebScrapingImpl
+import tkngch.bookmarkManager.jvm.configuration.AppEnv
+import tkngch.bookmarkManager.jvm.configuration.Configuration
 import tkngch.bookmarkManager.jvm.domain.BookmarkDomain
 import tkngch.bookmarkManager.jvm.domain.BookmarkDomainImpl
 import tkngch.bookmarkManager.jvm.service.BookmarkService
 import tkngch.bookmarkManager.jvm.service.BookmarkServiceImpl
-import java.io.File
 
-fun main() {
-    embeddedServer(
-        Netty,
-        port = config.port,
-        module = Application::module
-    ).start(wait = true)
+fun main(args: Array<String>) {
+    io.ktor.server.netty.EngineMain.main(args) // Manually using Netty's EngineMain
 }
 
-@Serializable
-data class User(val username: Username, val password: String)
-
-private fun declareDependencies() = DI {
-    val jdbcSqliteURL = when (config.appEnv) {
-        AppEnv.PRODUCTION -> "jdbc:sqlite:${getDatabasePath()}"
-        AppEnv.DEVELOPMENT -> "jdbc:sqlite::memory:"
+val Application.appEnv get() =
+    when (environment.config.property("ktor.deployment.environment").getString()) {
+        "development" -> AppEnv.DEVELOPMENT
+        "dev" -> AppEnv.DEVELOPMENT
+        else -> AppEnv.PRODUCTION
     }
-    bind<JdbcSqliteDriver>() with singleton { JdbcSqliteDriver(jdbcSqliteURL) }
-
-    bind<WebScraping>() with singleton { WebScrapingImpl() }
-
-    bind<BookmarkDomain>() with singleton { BookmarkDomainImpl() }
-
-    bind<BookmarkRepository>() with singleton { BookmarkRepositoryImpl(instance()) }
-
-    bind<BookmarkService>() with singleton {
-        BookmarkServiceImpl(instance(), instance(), instance())
-    }
-}
-
-private fun getDatabasePath(): String {
-    val parentDirectory = System.getenv("XDG_DATA_HOME")?.let { File(it) }
-        ?: File(System.getenv("HOME")!!).resolve(".local/share")
-
-    val dataDirectory = parentDirectory.resolve("bookmark-manager")
-    if (!dataDirectory.exists()) dataDirectory.mkdir()
-
-    return dataDirectory.resolve("data.sqlite3").toString()
-}
-
-private fun validateCredentials(credentials: UserPasswordCredential): UserIdPrincipal? {
-    val users = Json.decodeFromString<List<User>>({}.javaClass.getResource("/user.json").readText())
-    return users.firstOrNull { it.username == credentials.name }?.let { user ->
-        if (user.password == credentials.password) UserIdPrincipal(user.username) else null
-    }
-}
 
 fun Application.module() {
-    module(declareDependencies())
+    val config = Configuration.getInstance(appEnv)
+
+    val di = DI {
+        bind<JdbcSqliteDriver>() with singleton { JdbcSqliteDriver(config.jdbcSqliteURL) }
+        bind<WebScraping>() with singleton { WebScrapingImpl() }
+        bind<BookmarkDomain>() with singleton { BookmarkDomainImpl() }
+        bind<BookmarkRepository>() with singleton { BookmarkRepositoryImpl(instance()) }
+        bind<BookmarkService>() with singleton {
+            BookmarkServiceImpl(instance(), instance(), instance())
+        }
+    }
+    val service: BookmarkService by di.instance()
+
+    module(service, config.userTable)
 }
 
-fun Application.module(di: DI) {
+fun Application.module(service: BookmarkService, userTable: UserHashedTableAuth) {
     install(Authentication) {
         basic {
             realm = "bookmark"
-            validate { credentials -> validateCredentials(credentials) }
+            validate { credentials -> userTable.authenticate(credentials) }
         }
     }
     install(AutoHeadResponse)
@@ -121,8 +92,6 @@ fun Application.module(di: DI) {
     install(ContentNegotiation) { json() } // JSON content using kotlinx.serialization library
     install(DefaultHeaders)
     install(Routing)
-
-    val service: BookmarkService by di.instance()
 
     routing {
         authenticate {
