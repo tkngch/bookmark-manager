@@ -7,4 +7,4 @@ jobs:
                         - uses: actions/checkout@master
                         - uses: nanasess/setup-chromedriver@master
                         - name: Build with Gradle
-                          run: gradlew build
+                          run: ./gradlew build
