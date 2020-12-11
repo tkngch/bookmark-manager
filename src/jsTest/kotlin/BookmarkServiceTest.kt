@@ -69,6 +69,7 @@ class BookmarkServiceTest {
         var deleteTag: Int = 0,
         var getBookmarks: Int = 0,
         var createBookmark: Int = 0,
+        var refreshBookmark: Int = 0,
         var addTagsToBookmark: Int = 0,
         var dropTagsFromBookmark: Int = 0,
         var deleteBookmark: Int = 0,
@@ -108,6 +109,11 @@ class BookmarkServiceTest {
 
         override fun createBookmark(url: URL, tags: List<Tag>): Promise<Unit> {
             this.nCalled.createBookmark++
+            return Promise.resolve(Unit)
+        }
+
+        override fun refreshBookmark(bookmarkId: BookmarkId): Promise<Unit> {
+            this.nCalled.refreshBookmark++
             return Promise.resolve(Unit)
         }
 
@@ -202,6 +208,18 @@ class BookmarkServiceTest {
     //         this.bookmarkRepository.nCalled
     //     )
     // }
+
+    @Test
+    fun testBindingOnBookmarkAdd() {
+        val nCalledBeforeBookmarkRefresh = this.bookmarkRepository.nCalled.copy()
+        this.bookmarksView.binder.onRefresh.trigger(this.bookmark)
+        assertEquals(
+            nCalledBeforeBookmarkRefresh.copy(
+                refreshBookmark = nCalledBeforeBookmarkRefresh.refreshBookmark + 1
+            ),
+            this.bookmarkRepository.nCalled
+        )
+    }
 
     @Test
     fun testBindingOnBookmarkClick() {
