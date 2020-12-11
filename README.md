@@ -4,6 +4,8 @@
 
 A web-application to manage bookmarks.
 
+![screenshot](./screenshot.png)
+
 A bookmark can have zero or more tags. By clicking tags on the side panel,
 bookmarks with selected tags are displayed in the main pane.
 
