@@ -94,11 +94,26 @@ class BookmarksViewImpl(private val title: String) : BookmarksView {
             classes = setOf("border", "p-2", "my-1")
             attributes["id"] = divId
 
-            button {
-                type = ButtonType.button
-                classes = setOf("btn", "btn-outline-dark", "btn-sm", "float-right")
-                +"Delete"
-                onClickFunction = { _ -> this@BookmarksViewImpl.binder.onDelete.trigger(bookmark) }
+            div {
+                classes = setOf("float-right")
+
+                button {
+                    type = ButtonType.button
+                    classes = setOf("btn", "btn-outline-dark", "btn-sm", "mx-2")
+                    +"Refresh"
+                    onClickFunction = { _ ->
+                        this@BookmarksViewImpl.binder.onRefresh.trigger(bookmark)
+                    }
+                }
+
+                button {
+                    type = ButtonType.button
+                    classes = setOf("btn", "btn-outline-dark", "btn-sm")
+                    +"Delete"
+                    onClickFunction = { _ ->
+                        this@BookmarksViewImpl.binder.onDelete.trigger(bookmark)
+                    }
+                }
             }
 
             div {

@@ -35,6 +35,7 @@ import org.kodein.di.instance
 import org.kodein.di.singleton
 import tkngch.bookmarkManager.common.model.PayloadBookmarkCreate
 import tkngch.bookmarkManager.common.model.PayloadBookmarkDelete
+import tkngch.bookmarkManager.common.model.PayloadBookmarkRefresh
 import tkngch.bookmarkManager.common.model.PayloadBookmarkUpdateTags
 import tkngch.bookmarkManager.common.model.PayloadBookmarkVisit
 import tkngch.bookmarkManager.common.model.PayloadTagCreate
@@ -162,6 +163,12 @@ fun Route.bookmarkAPI(service: BookmarkService) {
             val principal: UserIdPrincipal? = call.authentication.principal()
             val payload = call.receive<PayloadBookmarkCreate>()
             principal?.let { service.createBookmark(it.name, payload.url, payload.tags) }
+            call.respond("OK")
+        }
+        put {
+            val principal: UserIdPrincipal? = call.authentication.principal()
+            val payload = call.receive<PayloadBookmarkRefresh>()
+            principal?.let { service.refreshBookmark(it.name, payload.bookmarkId) }
             call.respond("OK")
         }
         delete {
