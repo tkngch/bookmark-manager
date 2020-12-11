@@ -1,6 +1,6 @@
 # Bookmark manager (Kotlin multiplatform)
 
-![check](https://github.com/tkngch/bookmark-manager/workflows/check/badge.svg)
+![build](https://github.com/tkngch/bookmark-manager/workflows/build/badge.svg)
 
 A web-application to manage bookmarks.
 
@@ -13,8 +13,6 @@ are shown by default on the side pane, and secondary tags are shown only after
 
 ## How to use
 
-### as is
-
 First, build the project.
 
 ```
@@ -26,22 +24,6 @@ Then execute the entry-point script.
 ```
 build/install/bookmark-manager/bin/bookmark-manager
 ```
-
-### tar
-
-Alternatively, bundle the application into a `tar` archive.
-
-```
-gradlew assemble
-```
-
-Then extract all the files.
-
-```
-tar -xvf build/distributions/bookmark-manager-0.1.tar
-```
-
-Finally, execute the script under `bin` directory.
 
 ## How to add a user
 
@@ -60,6 +42,7 @@ echo -n $password | openssl dgst -binary -sha256 | openssl base64
 
 ## To do
 
+- Bookmark update, to retrieve the up-to-date title for a bookmark. URL redirection will be resolved too.
 - Scoring feature, to predict how likely it is for a bookmark to be visited.
 - Tag recommendation, to predict which tags are more likely to be added to each bookmark.
 
