@@ -44,7 +44,6 @@ echo -n $password | openssl dgst -binary -sha256 | openssl base64
 
 ## To do
 
-- Bookmark update, to retrieve the up-to-date title for a bookmark. URL redirection will be resolved too.
 - Scoring feature, to predict how likely it is for a bookmark to be visited.
 - Tag recommendation, to predict which tags are more likely to be added to each bookmark.
 

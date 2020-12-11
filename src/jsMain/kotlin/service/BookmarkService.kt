@@ -79,6 +79,12 @@ class BookmarkServiceImpl(
             window.open(bookmark.url, "_blank")
         }
 
+        this.bookmarksView.binder.onRefresh.subscribe { bookmark ->
+            this.bookmarkRepository.refreshBookmark(bookmark.id).then {
+                this.fetchAndShowBookmarks()
+            }
+        }
+
         this.bookmarksView.binder.onDelete.subscribe { bookmark ->
             this.bookmarkRepository.deleteBookmark(bookmark.id).then {
                 this.fetchAndShowBookmarks()

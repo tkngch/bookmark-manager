@@ -32,6 +32,9 @@ data class PayloadBookmarkUpdateTags(
 )
 
 @Serializable
+data class PayloadBookmarkRefresh(val bookmarkId: BookmarkId)
+
+@Serializable
 data class PayloadBookmarkDelete(val bookmarkId: BookmarkId)
 
 @Serializable

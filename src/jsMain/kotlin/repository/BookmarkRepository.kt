@@ -9,6 +9,7 @@ import tkngch.bookmarkManager.common.model.Bookmark
 import tkngch.bookmarkManager.common.model.BookmarkId
 import tkngch.bookmarkManager.common.model.PayloadBookmarkCreate
 import tkngch.bookmarkManager.common.model.PayloadBookmarkDelete
+import tkngch.bookmarkManager.common.model.PayloadBookmarkRefresh
 import tkngch.bookmarkManager.common.model.PayloadBookmarkUpdateTags
 import tkngch.bookmarkManager.common.model.PayloadBookmarkVisit
 import tkngch.bookmarkManager.common.model.PayloadTagCreate
@@ -34,6 +35,7 @@ interface BookmarkRepository {
 
     fun getBookmarks(tagIds: List<TagId>): Promise<List<Bookmark>>
     fun createBookmark(url: URL, tags: List<Tag>): Promise<Unit>
+    fun refreshBookmark(bookmarkId: BookmarkId): Promise<Unit>
     fun addTagsToBookmark(
         bookmarkId: BookmarkId,
         tags: List<TagId>
@@ -122,6 +124,18 @@ class BookmarkRepositoryImpl : BookmarkRepository {
                 headers = header,
                 body = Json.encodeToString(
                     PayloadBookmarkCreate(url = url, tags = tags)
+                ),
+            )
+        ).then {}
+
+    override fun refreshBookmark(bookmarkId: BookmarkId) =
+        window.fetch(
+            "${this.endpoint}/api/bookmark",
+            init = RequestInit(
+                method = "PUT",
+                headers = header,
+                body = Json.encodeToString(
+                    PayloadBookmarkRefresh(bookmarkId = bookmarkId)
                 ),
             )
         ).then {}

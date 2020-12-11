@@ -17,6 +17,8 @@ interface BookmarkService {
     fun createBookmark(user: Username, url: URL, tags: List<Tag>)
     fun createTag(user: Username, tagName: TagName, visibility: Visibility)
 
+    fun refreshBookmark(user: Username, bookmarkId: BookmarkId)
+
     fun getBookmarks(user: Username, tagIds: List<TagId>? = null): List<Bookmark>
     fun getTags(user: Username): List<Tag>
 
@@ -42,14 +44,30 @@ class BookmarkServiceImpl(
 ) : BookmarkService {
 
     override fun createBookmark(user: Username, url: URL, tags: List<Tag>) {
-        val title = webScraper.title(url)
-        val bookmark = bookmarkDom.makeNewBookmark(title, url, tags)
+        val info = webScraper.webpageInfo(url)
+        val bookmark = bookmarkDom.makeNewBookmark(info.title, info.url, tags)
         bookmarkRepo.addNewBookmark(user, bookmark)
     }
 
     override fun createTag(user: Username, tagName: TagName, visibility: Visibility) {
         val tag = bookmarkDom.makeNewTag(tagName, visibility)
         bookmarkRepo.addNewTag(user, tag)
+    }
+
+    override fun refreshBookmark(user: Username, bookmarkId: BookmarkId) {
+        val retrieved = bookmarkRepo.bookmark(user, bookmarkId)
+        retrieved?.let { bookmark ->
+            val info = webScraper.webpageInfo(bookmark.url)
+            val newBookmark = Bookmark(
+                id = bookmark.id,
+                title = info.title,
+                url = info.url,
+                tags = bookmark.tags,
+                createdAt = bookmark.createdAt
+            )
+            bookmarkRepo.deleteBookmark(user, bookmarkId)
+            bookmarkRepo.addNewBookmark(user, newBookmark)
+        }
     }
 
     override fun getBookmarks(user: Username, tagIds: List<TagId>?): List<Bookmark> =

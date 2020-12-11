@@ -3,9 +3,11 @@ package tkngch.bookmarkManager.jvm.adapter
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
+data class WebpageInfo(val title: String, val url: String)
+
 interface WebScraping {
 
-    fun title(url: String): String
+    fun webpageInfo(url: String): WebpageInfo
 }
 
 class WebScrapingImpl : WebScraping {
@@ -18,9 +20,9 @@ class WebScrapingImpl : WebScraping {
         private const val timeoutInMilliseconds: Int = 10_000
     }
 
-    override fun title(url: String): String {
+    override fun webpageInfo(url: String): WebpageInfo {
         val doc: Document =
             Jsoup.connect(url).userAgent(userAgent).timeout(timeoutInMilliseconds).get()
-        return doc.title()
+        return WebpageInfo(title = doc.title(), url = doc.location())
     }
 }
