@@ -15,7 +15,7 @@ import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.DefaultHeaders
 import io.ktor.http.ContentType
-import io.ktor.http.content.resources
+import io.ktor.http.content.resource
 import io.ktor.http.content.static
 import io.ktor.request.receive
 import io.ktor.response.respond
@@ -103,10 +103,7 @@ fun Application.module(service: BookmarkService, userTable: UserHashedTableAuth)
             }
             userAPI()
             bookmarkAPI(service)
-            static("/") {
-                // Serve the compile js and its map.
-                resources("")
-            }
+            static("/") { resource("output.js") }
         }
 
         get("/health_check") { call.respondText("OK") }
