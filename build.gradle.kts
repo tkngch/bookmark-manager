@@ -6,12 +6,15 @@ plugins {
 
     id("org.jlleitschuh.gradle.ktlint") version "9.4.0"
     id("com.squareup.sqldelight") version "1.4.3"
+    id("com.palantir.git-version") version "0.12.3"
 
     application
 }
 
 group = "tkngch"
-version = "1.1"
+// https://github.com/palantir/gradle-git-version/issues/188
+val gitVersion: groovy.lang.Closure<String> by extra
+version = gitVersion()
 
 repositories {
     mavenCentral()
