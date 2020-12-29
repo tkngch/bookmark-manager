@@ -13,6 +13,11 @@ To reduce clutter, tags are categorised into primary and secondary. Primary tags
 are shown by default on the side pane, and secondary tags are shown only after
 "Show More" is clicked.
 
+The bookmarks are listed in the order of their relevance, such that the bookmark
+with the highest relevance appears at the top of list. The relevance is inferred
+with the browsing history, and the inference procedure is implemented in
+`bookmark-scorer` library ([Link](https://github.com/tkngch/bookmark-scorer)).
+
 ## How to use
 
 First, build the project.
@@ -44,7 +49,7 @@ echo -n $password | openssl dgst -binary -sha256 | openssl base64
 
 ## To do
 
-- Scoring feature, to predict how likely it is for a bookmark to be visited.
+- Publish a distribution as part of github workflows.
 - Tag recommendation, to predict which tags are more likely to be added to each bookmark.
 
 ## Won't do

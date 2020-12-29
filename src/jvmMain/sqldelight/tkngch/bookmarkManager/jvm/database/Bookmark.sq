@@ -36,28 +36,42 @@ CREATE TABLE bookmarkVisitLog(
     PRIMARY KEY (username, visitedAt)
 );
 
+CREATE TABLE score(
+    bookmarkId TEXT PRIMARY KEY,
+    score REAL NOT NULL,
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (bookmarkId) REFERENCES bookmark(id) ON DELETE CASCADE
+);
 
 -- QUERIES
 
 selectBookmarksWithoutTags:
-    SELECT id AS bookmarkId, url, title, "" AS tags, createdAt
+    SELECT
+        bookmark.id AS bookmarkId,
+        bookmark.url AS url,
+        bookmark.title AS title,
+        "" AS tags,
+        bookmark.createdAt AS createdAt
     FROM bookmark
-    WHERE username = :username
-        AND id NOT IN (
+    LEFT JOIN score ON bookmark.id = score.bookmarkId
+    WHERE bookmark.username = :username
+        AND bookmark.id NOT IN (
             SELECT bookmarkId FROM bookmarkTag
             WHERE tagId IN (SELECT id FROM tag WHERE username = :username)
         )
-    ORDER BY createdAt DESC
+    -- Place bookmarks with score = NULL first (IS NOT NULL returns 0 for NULL entries). Then order by scores and dates.
+    ORDER BY score.score IS NOT NULL, score.score DESC, bookmark.createdAt DESC
     ;
 
 
 selectBookmarksByTags:
     WITH bookmarkIDsWithTags AS (
-        SELECT bookmarkTag.bookmarkId AS bookmarkId
-            , tag.id AS tagId
-            , tag.name AS name
-            , tag.visibility AS visibility
-            , printf('{"id": "%s", "name": "%s", "visibility": "%s", "createdAt": "%s"}', tag.id, tag.name, tag.visibility, tag.createdAt) AS tagAsJson
+        SELECT
+            bookmarkTag.bookmarkId AS bookmarkId,
+            tag.id AS tagId,
+            tag.name AS name,
+            tag.visibility AS visibility,
+            printf('{"id": "%s", "name": "%s", "visibility": "%s", "createdAt": "%s"}', tag.id, tag.name, tag.visibility, tag.createdAt) AS tagAsJson
         FROM bookmarkTag
         LEFT JOIN tag ON bookmarkTag.tagId = tag.id
         WHERE tag.username = :username
@@ -69,17 +83,18 @@ selectBookmarksByTags:
         GROUP BY bookmarkId
     )
     SELECT
-        tagged.id AS bookmarkId
-        , tagged.url AS url
-        , tagged.title AS title
-        , tagged.createdAt AS createdAt
-        , GROUP_CONCAT(bookmarkIDsWithTags.tagAsJson, :sep) AS tags
+        tagged.id AS bookmarkId,
+        tagged.url AS url,
+        tagged.title AS title,
+        tagged.createdAt AS createdAt,
+        GROUP_CONCAT(bookmarkIDsWithTags.tagAsJson, :sep) AS tags
     FROM bookmarkIDsWithTags
-        INNER JOIN bookmark AS tagged ON bookmarkIDsWithTags.bookmarkId = tagged.id
+    INNER JOIN bookmark AS tagged ON bookmarkIDsWithTags.bookmarkId = tagged.id
+    LEFT JOIN score ON bookmarkIDsWithTags.bookmarkId = score.bookmarkId
     WHERE
         tagged.id IN (SELECT bookmarkId FROM relevantBookmarkIDs WHERE nMatchingTags >= :requiredNTagMatches)
     GROUP BY tagged.id
-    ORDER BY tagged.createdAt DESC
+    ORDER BY score.score IS NOT NULL, score.score DESC, tagged.createdAt DESC
     ;
 
 
@@ -92,33 +107,41 @@ selectBookmarkById:
             AND id = :bookmarkId
     ),
     bookmarkIDsWithTags AS (
-        SELECT bookmarkTag.bookmarkId AS bookmarkId
-            , tag.id AS tagId
-            , tag.name AS name
-            , tag.visibility AS visibility
-            , printf('{"id": "%s", "name": "%s", "visibility": "%s", "createdAt": "%s"}', tag.id, tag.name, tag.visibility, tag.createdAt) AS tagAsJson
+        SELECT
+            bookmarkTag.bookmarkId AS bookmarkId,
+            tag.id AS tagId,
+            tag.name AS name,
+            tag.visibility AS visibility,
+            printf('{"id": "%s", "name": "%s", "visibility": "%s", "createdAt": "%s"}', tag.id, tag.name, tag.visibility, tag.createdAt) AS tagAsJson
         FROM bookmarkTag
         LEFT JOIN tag ON bookmarkTag.tagId = tag.id
         WHERE tag.username = :username AND bookmarkTag.bookmarkId = :bookmarkId
     )
-    SELECT bookmarkId, url, title, tags, createdAt
+    SELECT
+        selected.bookmarkId AS bookmarkId,
+        selected.url AS url,
+        selected.title AS title,
+        selected.tags AS tags,
+        selected.createdAt AS createdAt
     FROM (
-        SELECT tagged.id AS bookmarkId
-            , tagged.url AS url
-            , tagged.title AS title
-            , tagged.createdAt AS createdAt
-            , GROUP_CONCAT(bookmarkIDsWithTags.tagAsJson, :sep) AS tags
+        SELECT
+            tagged.id AS bookmarkId,
+            tagged.url AS url,
+            tagged.title AS title,
+            tagged.createdAt AS createdAt,
+            GROUP_CONCAT(bookmarkIDsWithTags.tagAsJson, :sep) AS tags
         FROM bookmarkIDsWithTags
-            INNER JOIN bookmark AS tagged ON bookmarkIDsWithTags.bookmarkId = tagged.id
+        INNER JOIN bookmark AS tagged ON bookmarkIDsWithTags.bookmarkId = tagged.id
         GROUP BY tagged.id
         UNION
-        SELECT tagless.id AS bookmarkId
-            , tagless.url AS url
-            , tagless.title AS title
-            , tagless.createdAt AS createdAt
-            , "" AS tags
+        SELECT
+            tagless.id AS bookmarkId,
+            tagless.url AS url,
+            tagless.title AS title,
+            tagless.createdAt AS createdAt,
+            "" AS tags
         FROM tagless
-    )
+    ) AS selected
     ;
 
 
@@ -165,6 +188,12 @@ selectTags:
     SELECT id, name, visibility, createdAt
     FROM tag
     WHERE username = :username AND (:tagId IS NULL OR id = :tagId)
+    ;
+
+selectLogs:
+    SELECT bookmarkId, visitedAt
+    FROM bookmarkVisitLog
+    WHERE username = :username
     ;
 
 
@@ -230,4 +259,10 @@ deleteBookmark:
 deleteTag:
     DELETE FROM tag
     WHERE username = :username AND id = :tagId
+    ;
+
+
+upsertScore:
+    -- Proper upsert has landed on sqlite 3.24, which by default is not supported by sqldelight.
+    INSERT OR REPLACE INTO score (bookmarkId, score, updatedAt) VALUES (:bookmarkId, :score, :updatedAt)
     ;

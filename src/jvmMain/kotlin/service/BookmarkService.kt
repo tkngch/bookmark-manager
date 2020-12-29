@@ -8,9 +8,11 @@ import tkngch.bookmarkManager.common.model.TagName
 import tkngch.bookmarkManager.common.model.URL
 import tkngch.bookmarkManager.common.model.Username
 import tkngch.bookmarkManager.common.model.Visibility
+import tkngch.bookmarkManager.common.model.VisitLog
 import tkngch.bookmarkManager.jvm.adapter.BookmarkRepository
 import tkngch.bookmarkManager.jvm.adapter.WebScraping
-import tkngch.bookmarkManager.jvm.domain.BookmarkDomain
+import tkngch.bookmarkManager.jvm.domain.make
+import java.time.Instant
 
 interface BookmarkService {
 
@@ -39,24 +41,19 @@ interface BookmarkService {
 
 class BookmarkServiceImpl(
     private val bookmarkRepo: BookmarkRepository,
-    private val bookmarkDom: BookmarkDomain,
     private val webScraper: WebScraping
 ) : BookmarkService {
 
     override fun createBookmark(user: Username, url: URL, tags: List<Tag>) {
         val info = webScraper.webpageInfo(url)
-        val bookmark = bookmarkDom.makeNewBookmark(info.title, info.url, tags)
-        bookmarkRepo.addNewBookmark(user, bookmark)
+        bookmarkRepo.addNewBookmark(user, Bookmark.make(info.title, info.url, tags))
     }
 
-    override fun createTag(user: Username, tagName: TagName, visibility: Visibility) {
-        val tag = bookmarkDom.makeNewTag(tagName, visibility)
-        bookmarkRepo.addNewTag(user, tag)
-    }
+    override fun createTag(user: Username, tagName: TagName, visibility: Visibility) =
+        bookmarkRepo.addNewTag(user, Tag.make(tagName, visibility))
 
-    override fun refreshBookmark(user: Username, bookmarkId: BookmarkId) {
-        val retrieved = bookmarkRepo.bookmark(user, bookmarkId)
-        retrieved?.let { bookmark ->
+    override fun refreshBookmark(user: Username, bookmarkId: BookmarkId) =
+        bookmarkRepo.bookmark(user, bookmarkId) ?.let { bookmark ->
             val info = webScraper.webpageInfo(bookmark.url)
             val newBookmark = Bookmark(
                 id = bookmark.id,
@@ -68,7 +65,6 @@ class BookmarkServiceImpl(
             bookmarkRepo.deleteBookmark(user, bookmarkId)
             bookmarkRepo.addNewBookmark(user, newBookmark)
         }
-    }
 
     override fun getBookmarks(user: Username, tagIds: List<TagId>?): List<Bookmark> =
         bookmarkRepo.bookmarks(user, tagIds ?: listOf())
@@ -79,7 +75,7 @@ class BookmarkServiceImpl(
         user: Username,
         bookmarkId: BookmarkId,
         tagIds: List<TagId>
-    ) = bookmarkRepo.addTagsToBookmark(user, bookmarkId, tagIds, bookmarkDom.getCurrentDateTime())
+    ) = bookmarkRepo.addTagsToBookmark(user, bookmarkId, tagIds, Instant.now().toString())
 
     override fun dropTagsFromBookmark(
         user: Username,
@@ -100,9 +96,6 @@ class BookmarkServiceImpl(
 
     override fun deleteTag(user: Username, tagId: TagId): Unit = bookmarkRepo.deleteTag(user, tagId)
 
-    override fun logBookmarkVisit(user: Username, bookmarkId: BookmarkId) {
-        val log = bookmarkDom.makeVisitLog(bookmarkId)
-        bookmarkRepo.addBookmarkVisitLog(user, log)
-        // TODO: train a model in a forked process?
-    }
+    override fun logBookmarkVisit(user: Username, bookmarkId: BookmarkId) =
+        bookmarkRepo.addBookmarkVisitLog(user, VisitLog.make(bookmarkId))
 }
