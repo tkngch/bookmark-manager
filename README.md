@@ -15,8 +15,8 @@ are shown by default on the side pane, and secondary tags are shown only after
 
 The bookmarks are listed in the order of their relevance, such that the bookmark
 with the highest relevance appears at the top of list. The relevance is inferred
-with the browsing history, and the inference procedure is implemented in
-`bookmark-scorer` library ([Link](https://github.com/tkngch/bookmark-scorer)).
+with the browsing history, as implemented in `bookmark-scorer` library
+([Link](https://github.com/tkngch/bookmark-scorer)).
 
 ## How to use
 
