@@ -10,6 +10,7 @@ import org.junit.jupiter.api.TestInstance
 import tkngch.bookmarkManager.common.model.Bookmark
 import tkngch.bookmarkManager.common.model.Tag
 import tkngch.bookmarkManager.common.model.Visibility
+import tkngch.bookmarkManager.jvm.domain.BookmarkScore
 import kotlin.test.assertNotEquals
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -331,6 +332,106 @@ class BookmarkRepositoryTest {
             repo.dropTagsFromBookmark(username, bookmark.id, tagsToDrop.map { it.id })
             val afterDropping = repo.bookmark(username, bookmark.id)
             assertEquals(tagsToAdd.toSet() - tagsToDrop.toSet(), afterDropping!!.tags.toSet())
+        }
+    }
+
+    @Nested
+    inner class Scores {
+        private val username = "TestScores"
+
+        @Test
+        fun `add and update scores on bookmarks without tags`() {
+            val bookmarks = listOf(
+                "cca5485f-2ef2-4b60-bdbb-0e5136e67ca1",
+                "4bcda54c-f832-4297-8741-30f35f51b537",
+                "24f2c374-cad0-40c9-a4ee-5f5139753996",
+                "83e0022b-1ef3-4e2f-ad64-104b5e24cca7"
+            ).map {
+                Bookmark(
+                    id = it,
+                    title = it.split("-").first(),
+                    url = it.split("-").last(),
+                    tags = emptyList(),
+                    createdAt = datetime
+                )
+            }
+            bookmarks.forEach { repo.addNewBookmark(username, it) }
+
+            val oldScores = bookmarks.withIndex().map {
+                BookmarkScore.make(bookmarkId = it.value.id, score = it.index / 10.0)
+            }
+            oldScores.forEach { repo.addOrUpdateScore(it) }
+
+            val bookmarksWithOldScore = repo.bookmarks(username, tagIds = listOf())
+            assertEquals(
+                bookmarksWithOldScore.map { it.id },
+                oldScores.sortedByDescending { it.score }.map { it.bookmarkId }
+            )
+
+            val newScores = oldScores.map { it.copy(score = 1.0 / it.score) }
+            newScores.forEach { repo.addOrUpdateScore(it) }
+            assertNotEquals(
+                oldScores.sortedByDescending { it.score }.map { it.bookmarkId },
+                newScores.sortedByDescending { it.score }.map { it.bookmarkId }
+            )
+
+            val bookmarksWithNewScore = repo.bookmarks(username, tagIds = listOf())
+            assertEquals(
+                bookmarksWithNewScore.map { it.id },
+                newScores.sortedByDescending { it.score }.map { it.bookmarkId }
+            )
+        }
+
+        @Test
+        fun `add and update scores on bookmarks with a primary tag`() {
+            val tag = Tag(
+                id = "184017de-52b3-46ae-9f83-e22e7ce6297e",
+                name = "184017de-52b3-46ae-9f83-e22e7ce6297e",
+                visibility = Visibility.PRIMARY,
+                createdAt = datetime
+            )
+            repo.addNewTag(username, tag)
+
+            val bookmarks = listOf(
+                "9911252e-a7a0-4098-9b96-fc635942c00d",
+                "0dfaa544-d4d8-4a19-9997-de38996421eb",
+                "653d212c-79cf-44b3-8826-b618c3455810",
+                "a56e0ebf-4463-4192-beca-e07e6e4f1a30",
+                "810a78f9-277d-4a26-a24a-f5d7b15370d6"
+            ).map {
+                Bookmark(
+                    id = it,
+                    title = it.split("-").first(),
+                    url = it.split("-").last(),
+                    tags = listOf(tag),
+                    createdAt = datetime
+                )
+            }
+            bookmarks.forEach { repo.addNewBookmark(username, it) }
+
+            val oldScores = bookmarks.withIndex().map {
+                BookmarkScore.make(bookmarkId = it.value.id, score = it.index / 10.0)
+            }
+            oldScores.forEach { repo.addOrUpdateScore(it) }
+
+            val bookmarksWithOldScore = repo.bookmarks(username, tagIds = listOf(tag.id))
+            assertEquals(
+                bookmarksWithOldScore.map { it.id },
+                oldScores.sortedByDescending { it.score }.map { it.bookmarkId }
+            )
+
+            val newScores = oldScores.map { it.copy(score = 1.0 / it.score) }
+            newScores.forEach { repo.addOrUpdateScore(it) }
+            assertNotEquals(
+                oldScores.sortedByDescending { it.score }.map { it.bookmarkId },
+                newScores.sortedByDescending { it.score }.map { it.bookmarkId }
+            )
+
+            val bookmarksWithNewScore = repo.bookmarks(username, tagIds = listOf(tag.id))
+            assertEquals(
+                bookmarksWithNewScore.map { it.id },
+                newScores.sortedByDescending { it.score }.map { it.bookmarkId }
+            )
         }
     }
 }

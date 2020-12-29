@@ -19,7 +19,9 @@ data class Bookmark(
     @Serializable // Unless explicitly annotated, a list is serialized as String, not Json array.
     val tags: List<Tag>,
     val createdAt: Datetime,
-)
+) {
+    companion object {}
+}
 
 @Serializable
 data class Tag(
@@ -27,10 +29,14 @@ data class Tag(
     val name: TagName,
     val visibility: Visibility,
     val createdAt: Datetime
-)
+) {
+    companion object {}
+}
 
 @Serializable
 data class VisitLog(
     val bookmarkId: BookmarkId,
     val visitedAt: Datetime
-)
+) {
+    companion object {}
+}

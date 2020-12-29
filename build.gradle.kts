@@ -28,6 +28,17 @@ repositories {
     maven {
         url = uri("https://dl.bintray.com/kotlin/kotlin-js-wrappers")
     }
+    maven {
+        url = uri("https://maven.pkg.github.com/tkngch/bookmark-scorer")
+        credentials {
+            username = project.findProperty("github.username") as String? ?: System.getenv(
+                "GITHUB_ACTOR"
+            )
+            password = project.findProperty("github.token") as String? ?: System.getenv(
+                "GITHUB_TOKEN"
+            )
+        }
+    }
 }
 
 kotlin {
@@ -67,11 +78,13 @@ kotlin {
                 implementation("io.ktor:ktor-auth:1.4.1")
                 implementation("io.ktor:ktor-serialization:1.4.1")
                 implementation("io.ktor:ktor-server-netty:1.4.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 
-                implementation("org.kodein.di:kodein-di:7.1.0")
                 implementation("org.jsoup:jsoup:1.13.1")
                 implementation("com.squareup.sqldelight:sqlite-driver:1.4.3")
                 implementation("ch.qos.logback:logback-classic:1.2.3")
+
+                implementation("tkngch:bookmark-scorer:1.3.0")
             }
         }
         val jvmTest by getting {

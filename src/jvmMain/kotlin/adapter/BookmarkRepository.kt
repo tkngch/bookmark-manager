@@ -14,6 +14,7 @@ import tkngch.bookmarkManager.common.model.Username
 import tkngch.bookmarkManager.common.model.Visibility
 import tkngch.bookmarkManager.common.model.VisitLog
 import tkngch.bookmarkManager.jvm.database.Database
+import tkngch.bookmarkManager.jvm.domain.BookmarkScore
 
 interface BookmarkRepository {
     fun addNewBookmark(user: Username, bookmark: Bookmark)
@@ -42,6 +43,9 @@ interface BookmarkRepository {
 
     fun deleteBookmark(user: Username, id: BookmarkId)
     fun deleteTag(user: Username, id: TagId)
+
+    fun visitLogs(user: Username): List<VisitLog>
+    fun addOrUpdateScore(score: BookmarkScore)
 }
 
 class BookmarkRepositoryImpl(driver: JdbcSqliteDriver) : BookmarkRepository {
@@ -217,4 +221,15 @@ class BookmarkRepositoryImpl(driver: JdbcSqliteDriver) : BookmarkRepository {
 
     override fun deleteTag(user: Username, id: TagId): Unit =
         database.bookmarkQueries.deleteTag(username = user, tagId = id)
+
+    override fun visitLogs(user: Username) =
+        database.bookmarkQueries.selectLogs(username = user).executeAsList().map {
+            VisitLog(bookmarkId = it.bookmarkId, visitedAt = it.visitedAt)
+        }
+
+    override fun addOrUpdateScore(score: BookmarkScore) = database.bookmarkQueries.upsertScore(
+        bookmarkId = score.bookmarkId,
+        score = score.score,
+        updatedAt = score.updatedAt
+    )
 }

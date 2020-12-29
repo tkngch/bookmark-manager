@@ -29,10 +29,7 @@ import io.ktor.routing.put
 import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.serialization.json
-import org.kodein.di.DI
-import org.kodein.di.bind
-import org.kodein.di.instance
-import org.kodein.di.singleton
+import kotlinx.coroutines.launch
 import tkngch.bookmarkManager.common.model.PayloadBookmarkCreate
 import tkngch.bookmarkManager.common.model.PayloadBookmarkDelete
 import tkngch.bookmarkManager.common.model.PayloadBookmarkRefresh
@@ -42,16 +39,14 @@ import tkngch.bookmarkManager.common.model.PayloadTagCreate
 import tkngch.bookmarkManager.common.model.PayloadTagDelete
 import tkngch.bookmarkManager.common.model.PayloadTagUpdate
 import tkngch.bookmarkManager.common.model.TagId
-import tkngch.bookmarkManager.jvm.adapter.BookmarkRepository
 import tkngch.bookmarkManager.jvm.adapter.BookmarkRepositoryImpl
-import tkngch.bookmarkManager.jvm.adapter.WebScraping
 import tkngch.bookmarkManager.jvm.adapter.WebScrapingImpl
 import tkngch.bookmarkManager.jvm.configuration.AppEnv
 import tkngch.bookmarkManager.jvm.configuration.Configuration
-import tkngch.bookmarkManager.jvm.domain.BookmarkDomain
-import tkngch.bookmarkManager.jvm.domain.BookmarkDomainImpl
 import tkngch.bookmarkManager.jvm.service.BookmarkService
 import tkngch.bookmarkManager.jvm.service.BookmarkServiceImpl
+import tkngch.bookmarkManager.jvm.service.ScoringFrequencyServiceImpl
+import tkngch.bookmarkManager.jvm.service.ScoringService
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args) // Manually using Netty's EngineMain
@@ -66,22 +61,19 @@ val Application.appEnv get() =
 
 fun Application.module() {
     val config = Configuration.getInstance(appEnv)
-
-    val di = DI {
-        bind<JdbcSqliteDriver>() with singleton { JdbcSqliteDriver(config.jdbcSqliteURL) }
-        bind<WebScraping>() with singleton { WebScrapingImpl() }
-        bind<BookmarkDomain>() with singleton { BookmarkDomainImpl() }
-        bind<BookmarkRepository>() with singleton { BookmarkRepositoryImpl(instance()) }
-        bind<BookmarkService>() with singleton {
-            BookmarkServiceImpl(instance(), instance(), instance())
-        }
-    }
-    val service: BookmarkService by di.instance()
-
-    module(service, config.userTable)
+    val databaseDriver = JdbcSqliteDriver(config.jdbcSqliteURL)
+    val webScraper = WebScrapingImpl()
+    val repository = BookmarkRepositoryImpl(databaseDriver)
+    val bookmarkService = BookmarkServiceImpl(repository, webScraper)
+    val scoringService = ScoringFrequencyServiceImpl(repository)
+    module(config.userTable, bookmarkService, scoringService)
 }
 
-fun Application.module(service: BookmarkService, userTable: UserHashedTableAuth) {
+fun Application.module(
+    userTable: UserHashedTableAuth,
+    bookmarkService: BookmarkService,
+    scoringService: ScoringService
+) {
     install(Authentication) {
         basic {
             realm = "bookmark"
@@ -97,13 +89,15 @@ fun Application.module(service: BookmarkService, userTable: UserHashedTableAuth)
     routing {
         authenticate {
             get("/") {
+                val principal: UserIdPrincipal? = call.authentication.principal()
+                principal ?.let { launch { scoringService.updateScores(it.name) } }
                 call.respondText(
                     this::class.java.classLoader.getResource("index.html")!!.readText(),
                     ContentType.Text.Html
                 )
             }
             userAPI()
-            bookmarkAPI(service)
+            bookmarkAPI(bookmarkService)
             static("/") { resource("output.js") }
         }
 
