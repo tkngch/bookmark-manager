@@ -64,7 +64,7 @@ class BookmarkServiceImpl(
             )
             bookmarkRepo.deleteBookmark(user, bookmarkId)
             bookmarkRepo.addNewBookmark(user, newBookmark)
-        }
+        } ?: Unit
 
     override fun getBookmarks(user: Username, tagIds: List<TagId>?): List<Bookmark> =
         bookmarkRepo.bookmarks(user, tagIds ?: listOf())
