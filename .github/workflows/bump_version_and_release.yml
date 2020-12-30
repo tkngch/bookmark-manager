@@ -29,6 +29,8 @@ jobs:
           tar_filename=$(basename $tar_filepath)
           echo "::set-output name=tar_filepath::$tar_filepath"
           echo "::set-output name=tar_filename::$tar_filename"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
