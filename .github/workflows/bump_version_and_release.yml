@@ -1,0 +1,51 @@
+name: bump version and release
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@1.33.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: false
+          RELEASE_BRANCHES: main
+      - name: Create the distribution TAR
+        id: dist_tar
+        # To see how to define the outputs, see the documentation below.
+        # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idoutputs
+        run: |
+          ./gradlew distTar
+          tar_filepath=$(find ./build/distributions -name '*.tar')
+          tar_filename=$(basename $tar_filepath)
+          echo "::set-output name=tar_filepath::$tar_filepath"
+          echo "::set-output name=tar_filename::$tar_filename"
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.dist_tar.outputs.tar_filepath }}
+          asset_name: ${{ steps.dist_tar.outputs.tar_filename }}
+          asset_content_type: application/x-tar
