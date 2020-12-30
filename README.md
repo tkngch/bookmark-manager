@@ -52,9 +52,9 @@ default port is 8081.
 
 ### Add a user
 
-To add a user, create `$XDG_DATA_HOME/bookmark-manager/user.json`. In case where
+To add a user, create `$XDG_DATA_HOME/bookmark-manager/users.json`. In case where
 `XDG_DATA_HOME` is not set, create
-`$HOME/.local/share/bookmark-manager/user.json`. This json file defines a list
+`$HOME/.local/share/bookmark-manager/users.json`. This json file defines a list
 of users with their hashed password. For example, the content can be
 
 ```
