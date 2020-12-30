@@ -59,8 +59,8 @@ selectBookmarksWithoutTags:
             SELECT bookmarkId FROM bookmarkTag
             WHERE tagId IN (SELECT id FROM tag WHERE username = :username)
         )
-    -- Place bookmarks with score = NULL first (IS NOT NULL returns 0 for NULL entries). Then order by scores and dates.
-    ORDER BY score.score IS NOT NULL, score.score DESC, bookmark.createdAt DESC
+    -- Place bookmarks with score = NULL last (IS NULL returns 0 for non-NULL entries). Then order by scores and dates.
+    ORDER BY score.score IS NULL, score.score DESC, bookmark.createdAt DESC
     ;
 
 

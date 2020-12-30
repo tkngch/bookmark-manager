@@ -26,7 +26,20 @@ data class Configuration(val jdbcSqliteURL: String, val userTable: UserHashedTab
         }
 
         private val developmentUserTable: UserHashedTableAuth by lazy {
-            getUserTable({}.javaClass.getResource("/dev_users.json").readText())
+            val json =
+                """
+                [
+                    {
+                        "username": "test-user",
+                        "password": "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg="
+                    },
+                    {
+                        "username": "test-user2",
+                        "password": "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg="
+                    }
+                ]
+                """.trimIndent()
+            getUserTable(json)
         }
 
         private val productionUserTable: UserHashedTableAuth by lazy {
