@@ -26,19 +26,29 @@ with the browsing history, as implemented in `bookmark-scorer` library
 
 ## How to use
 
-First, build the project.
-
-```
-gradlew installDist
-```
-
-Then execute the entry-point script.
-
-```
-build/install/bookmark-manager/bin/bookmark-manager
-```
+The distribution TAR file is available at the release page
+([Link](https://github.com/tkngch/bookmark-manager/releases)). Untar the
+distribution, and execute the entrypoint `bin/bookmark-manager`.
 
 This application is build with Java 11.
+
+### Configuration
+
+By default, the application runs in the development mode, which does not store
+data in the disk. Switch to the production mode by setting the environment variable:
+
+```
+BOOKMARKMANAGER_ENV=production
+```
+
+and optionally, set the port
+
+```
+BOOKMARKMANAGER_PORT=8000
+```
+
+Then the web UI is available at `http://localhost:$BOOKMARKMANAGER_PORT`. The
+default port is 8081.
 
 ### Add a user
 
