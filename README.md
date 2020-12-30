@@ -6,7 +6,7 @@ A web-application to manage bookmarks.
 
 ![screenshot](./screenshot.png)
 
-## Main features
+## Key features
 
 ### Tagging
 
@@ -32,10 +32,11 @@ distribution, and execute the entrypoint `bin/bookmark-manager`.
 
 This application is build with Java 11.
 
-### Configuration
+### Configure
 
-By default, the application runs in the development mode, which does not store
-data in the disk. Switch to the production mode by setting the environment variable:
+By default, the application runs in the development mode, which uses the
+in-memory database so no bookmark is stored in the disk. Switch to the
+production mode by setting the environment variable:
 
 ```
 BOOKMARKMANAGER_ENV=production
@@ -88,10 +89,6 @@ XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=
 ```
 
 which appears in the above example.
-
-For more example of `users.json` content, see
-`src/jvmMain/resources/dev_users.json`. This `dev_users.json` defines users on
-the development server.
 
 ## To do
 
