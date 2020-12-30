@@ -16,40 +16,53 @@ data class Configuration(val jdbcSqliteURL: String, val userTable: UserHashedTab
     companion object Factory {
         fun getInstance(appEnv: AppEnv) = when (appEnv) {
             AppEnv.DEVELOPMENT -> Configuration(
-                "jdbc:sqlite::memory:",
-                getUserTable("dev_users.json")
+                "jdbc:sqlite:$developmentDatabase",
+                developmentUserTable
             )
             AppEnv.PRODUCTION -> Configuration(
-                "jdbc:sqlite:${getDatabase()}",
-                getUserTable("users.json")
+                "jdbc:sqlite:$productionDatabase",
+                productionUserTable
             )
         }
 
-        @Serializable
-        private data class User(val username: Username, val password: String)
+        private val developmentUserTable: UserHashedTableAuth by lazy {
+            getUserTable({}.javaClass.getResource("/dev_users.json").readText())
+        }
 
-        private val base64Decoder = Base64.getDecoder()
-        private val digest = MessageDigest.getInstance("SHA-256")
+        private val productionUserTable: UserHashedTableAuth by lazy {
+            getUserTable(productionDataDirectory.resolve("users.json").readText())
+        }
 
-        private fun getUserTable(filename: String) = UserHashedTableAuth(
-            digester = { password -> digest.digest(password.toByteArray()) },
-            table = getUsers(filename).fold(mapOf()) { acc, curr ->
-                acc + mapOf(curr.username to base64Decoder.decode(curr.password))
-            }
-        )
+        private fun getUserTable(usersJson: String): UserHashedTableAuth {
+            @Serializable
+            data class User(val username: Username, val password: String)
+            val users = Json.decodeFromString<List<User>>(usersJson)
 
-        private fun getUsers(filename: String) = Json.decodeFromString<List<User>>(
-            {}.javaClass.getResource("/$filename").readText()
-        )
+            val base64Decoder = Base64.getDecoder()
+            val digest = MessageDigest.getInstance("SHA-256")
 
-        private fun getDatabase(): String {
+            return UserHashedTableAuth(
+                digester = { password -> digest.digest(password.toByteArray()) },
+                table = users.fold(mapOf()) { acc, curr ->
+                    acc + mapOf(curr.username to base64Decoder.decode(curr.password))
+                }
+            )
+        }
+
+        private val developmentDatabase: String = ":memory:"
+
+        private val productionDatabase: String by lazy {
+            productionDataDirectory.resolve("data.sqlite3").toString()
+        }
+
+        private val productionDataDirectory: File by lazy {
             val parentDirectory = System.getenv("XDG_DATA_HOME")?.let { File(it) }
                 ?: File(System.getenv("HOME")!!).resolve(".local/share")
 
             val dataDirectory = parentDirectory.resolve("bookmark-manager")
             if (!dataDirectory.exists()) dataDirectory.mkdir()
 
-            return dataDirectory.resolve("data.sqlite3").toString()
+            dataDirectory
         }
     }
 }

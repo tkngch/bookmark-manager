@@ -6,12 +6,18 @@ A web-application to manage bookmarks.
 
 ![screenshot](./screenshot.png)
 
+## Main features
+
+### Tagging
+
 A bookmark can have zero or more tags. By clicking tags on the side panel,
 bookmarks with selected tags are displayed in the main pane.
 
 To reduce clutter, tags are categorised into primary and secondary. Primary tags
 are shown by default on the side pane, and secondary tags are shown only after
 "Show More" is clicked.
+
+### Ordering by relevance
 
 The bookmarks are listed in the order of their relevance, such that the bookmark
 with the highest relevance appears at the top of list. The relevance is inferred
@@ -32,24 +38,53 @@ Then execute the entry-point script.
 build/install/bookmark-manager/bin/bookmark-manager
 ```
 
-## How to add a user
+This application is build with Java 11.
 
-To add a user, edit `src/jvmMain/resources/users.json`. This JSON file defines a
-list of object, each of which is expected to have "username" and "password"
-fields. Value of "password" field should be the hashed password. For example, if
-the password is `password`, its hashed value is
-`XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=`. See
-`src/jvmMain/resources/dev_users.json` for an example.
+### Add a user
 
-Note that the hashed password can be obtained with the following shell command:
+To add a user, create `$XDG_DATA_HOME/bookmark-manager/user.json`. In case where
+`XDG_DATA_HOME` is not set, create
+`$HOME/.local/share/bookmark-manager/user.json`. This json file defines a list
+of users with their hashed password. For example, the content can be
+
+```
+[
+    {
+        "username": "test-user",
+        "password": "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg="
+    }
+]
+```
+
+in which case one user `test-user` is recognised by the application. Each entry
+is expected to have "username" and "password" fields. Value of "password" field
+should be the hashed password. The hashed password can be obtained with the
+following shell command:
 
 ```
 echo -n $password | openssl dgst -binary -sha256 | openssl base64
 ```
 
+For example,
+
+```
+echo -n 'password' | openssl dgst -binary -sha256 | openssl base64
+```
+
+gives us
+
+```
+XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=
+```
+
+which appears in the above example.
+
+For more example of `users.json` content, see
+`src/jvmMain/resources/dev_users.json`. This `dev_users.json` defines users on
+the development server.
+
 ## To do
 
-- Publish a distribution as part of github workflows.
 - Tag recommendation, to predict which tags are more likely to be added to each bookmark.
 
 ## Won't do
