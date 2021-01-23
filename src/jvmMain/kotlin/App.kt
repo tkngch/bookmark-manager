@@ -45,8 +45,8 @@ import tkngch.bookmarkManager.jvm.configuration.AppEnv
 import tkngch.bookmarkManager.jvm.configuration.Configuration
 import tkngch.bookmarkManager.jvm.service.BookmarkService
 import tkngch.bookmarkManager.jvm.service.BookmarkServiceImpl
-import tkngch.bookmarkManager.jvm.service.ScoringFrequencyServiceImpl
 import tkngch.bookmarkManager.jvm.service.ScoringService
+import tkngch.bookmarkManager.jvm.service.ScoringServiceImpl
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args) // Manually using Netty's EngineMain
@@ -65,7 +65,7 @@ fun Application.module() {
     val webScraper = WebScrapingImpl()
     val repository = BookmarkRepositoryImpl(databaseDriver)
     val bookmarkService = BookmarkServiceImpl(repository, webScraper)
-    val scoringService = ScoringFrequencyServiceImpl(repository)
+    val scoringService = ScoringServiceImpl(repository)
     module(config.userTable, bookmarkService, scoringService)
 }
 
