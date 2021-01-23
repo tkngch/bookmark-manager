@@ -32,6 +32,19 @@ distribution, and execute the entrypoint `bin/bookmark-manager`.
 
 This application is build with Java 11.
 
+### Dependency
+
+The application requires one external dependency (libtorch) on the server
+side. libtorch is freely available at [this
+page](https://pytorch.org/get-started/locally/). The application does not use
+CUDA, so the CPU-only version of libtorch is sufficient. After downloading and
+unzipping, define an environment variable so that the application can find
+libtorch.
+
+```
+BOOKMARK_MANAGER_OPTS=-Djava.library.path=<path to libtorch/lib>
+```
+
 ### Configure
 
 By default, the application runs in the development mode, which uses the
