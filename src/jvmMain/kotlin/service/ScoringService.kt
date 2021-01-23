@@ -3,7 +3,7 @@ package tkngch.bookmarkManager.jvm.service
 import tkngch.bookmarkManager.common.model.Username
 import tkngch.bookmarkManager.jvm.adapter.BookmarkRepository
 import tkngch.bookmarkManager.jvm.domain.BookmarkScore
-import tkngch.bookmarkScorer.domain.Visit
+import tkngch.bookmarkScorer.domain.VisitInstant
 import tkngch.bookmarkScorer.domain.Visits
 import java.time.Instant
 
@@ -12,7 +12,7 @@ interface ScoringService {
     fun updateScores(user: Username)
 }
 
-class ScoringFrequencyServiceImpl(
+class ScoringServiceImpl(
     private val bookmarkRepo: BookmarkRepository
 ) : ScoringService {
 
@@ -21,16 +21,16 @@ class ScoringFrequencyServiceImpl(
 
         val visits = Visits(
             records =
-                visitLogs.groupBy { it.bookmarkId }.asIterable().map { log ->
-                    Visit(
-                        bookmarkId = log.key,
-                        visitDates = log.value.map { Instant.parse(it.visitedAt) }
+                visitLogs.map { log ->
+                    VisitInstant(
+                        bookmarkId = log.bookmarkId,
+                        instant = Instant.parse(log.visitedAt)
                     )
                 }
         )
 
-        val scores = visits.inferredAverageDailyVisits.map {
-            BookmarkScore.make(bookmarkId = it.bookmarkId, score = it.score)
+        val scores = visits.inferDailyCounts().asIterable().map { entry ->
+            BookmarkScore.make(bookmarkId = entry.key, score = entry.value)
         }
         scores.forEach { bookmarkRepo.addOrUpdateScore(it) }
     }

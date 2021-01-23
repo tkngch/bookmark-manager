@@ -84,7 +84,7 @@ kotlin {
                 implementation("com.squareup.sqldelight:sqlite-driver:1.4.3")
                 implementation("ch.qos.logback:logback-classic:1.2.3")
 
-                implementation("tkngch:bookmark-scorer:1.3.0")
+                implementation("tkngch:bookmark-scorer:1.8.0")
             }
         }
         val jvmTest by getting {
@@ -131,6 +131,8 @@ tasks.getByName<JavaExec>("run") {
 }
 
 tasks.withType<Test> {
+    systemProperty("java.library.path", file("libtorch/lib").absolutePath)
+
     useJUnitPlatform()
     testLogging.events = setOf(
         org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
