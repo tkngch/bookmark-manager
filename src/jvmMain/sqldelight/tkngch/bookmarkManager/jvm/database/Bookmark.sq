@@ -94,7 +94,7 @@ selectBookmarksByTags:
     WHERE
         tagged.id IN (SELECT bookmarkId FROM relevantBookmarkIDs WHERE nMatchingTags >= :requiredNTagMatches)
     GROUP BY tagged.id
-    ORDER BY score.score IS NOT NULL, score.score DESC, tagged.createdAt DESC
+    ORDER BY score.score IS NULL, score.score DESC, tagged.createdAt DESC
     ;
 
 
