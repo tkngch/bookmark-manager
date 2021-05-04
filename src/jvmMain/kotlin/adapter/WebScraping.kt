@@ -12,10 +12,11 @@ interface WebScraping {
 
 class WebScrapingImpl : WebScraping {
     companion object {
-        /* ktlint-disable max-line-length */
+        // Use the user-agent of well-known web-crawler, to skip the cookie consent page. Here, we
+        // use the user-agent of Googlebot, taken from
+        // https://developers.google.com/search/docs/advanced/crawling/overview-google-crawlers
         private const val userAgent: String =
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36"
-        /* ktlint-enable max-line-length */
+            "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
 
         private const val timeoutInMilliseconds: Int = 10_000
     }
