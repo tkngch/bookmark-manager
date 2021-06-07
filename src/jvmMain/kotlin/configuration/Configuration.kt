@@ -11,6 +11,9 @@ import java.util.Base64
 
 enum class AppEnv { PRODUCTION, DEVELOPMENT; }
 
+@Serializable
+private data class User(val username: Username, val password: String)
+
 data class Configuration(val jdbcSqliteURL: String, val userTable: UserHashedTableAuth) {
 
     companion object Factory {
@@ -47,8 +50,6 @@ data class Configuration(val jdbcSqliteURL: String, val userTable: UserHashedTab
         }
 
         private fun getUserTable(usersJson: String): UserHashedTableAuth {
-            @Serializable
-            data class User(val username: Username, val password: String)
             val users = Json.decodeFromString<List<User>>(usersJson)
 
             val base64Decoder = Base64.getDecoder()

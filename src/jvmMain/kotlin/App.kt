@@ -1,6 +1,5 @@
 package tkngch.bookmarkManager.jvm
 
-import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -14,7 +13,9 @@ import io.ktor.features.AutoHeadResponse
 import io.ktor.features.CallLogging
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.DefaultHeaders
+import io.ktor.features.StatusPages
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.resource
 import io.ktor.http.content.static
 import io.ktor.request.receive
@@ -30,6 +31,7 @@ import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.serialization.json
 import kotlinx.coroutines.launch
+import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import tkngch.bookmarkManager.common.model.PayloadBookmarkCreate
 import tkngch.bookmarkManager.common.model.PayloadBookmarkDelete
 import tkngch.bookmarkManager.common.model.PayloadBookmarkRefresh
@@ -39,8 +41,8 @@ import tkngch.bookmarkManager.common.model.PayloadTagCreate
 import tkngch.bookmarkManager.common.model.PayloadTagDelete
 import tkngch.bookmarkManager.common.model.PayloadTagUpdate
 import tkngch.bookmarkManager.common.model.TagId
-import tkngch.bookmarkManager.jvm.adapter.BookmarkRepositoryImpl
-import tkngch.bookmarkManager.jvm.adapter.WebScrapingImpl
+import tkngch.bookmarkManager.jvm.adapter.BookmarkJdbcSqliteRepository
+import tkngch.bookmarkManager.jvm.adapter.WebpageInfoJsoupFactory
 import tkngch.bookmarkManager.jvm.configuration.AppEnv
 import tkngch.bookmarkManager.jvm.configuration.Configuration
 import tkngch.bookmarkManager.jvm.service.BookmarkService
@@ -61,9 +63,13 @@ val Application.appEnv get() =
 
 fun Application.module() {
     val config = Configuration.getInstance(appEnv)
-    val databaseDriver = JdbcSqliteDriver(config.jdbcSqliteURL)
-    val webScraper = WebScrapingImpl()
-    val repository = BookmarkRepositoryImpl(databaseDriver)
+
+    val dataSource = SQLiteConnectionPoolDataSource()
+    dataSource.url = config.jdbcSqliteURL
+    val connectionPool = dataSource.pooledConnection
+    val repository = BookmarkJdbcSqliteRepository(connectionPool)
+
+    val webScraper = WebpageInfoJsoupFactory()
     val bookmarkService = BookmarkServiceImpl(repository, webScraper)
     val scoringService = ScoringServiceImpl(repository)
     module(config.userTable, bookmarkService, scoringService)
@@ -82,6 +88,12 @@ fun Application.module(
     }
     install(AutoHeadResponse)
     install(CallLogging)
+    install(StatusPages) {
+        exception<Throwable> { cause ->
+            call.respond(HttpStatusCode.InternalServerError, cause.localizedMessage)
+            throw cause
+        }
+    }
     install(ContentNegotiation) { json() } // JSON content using kotlinx.serialization library
     install(DefaultHeaders)
     install(Routing)

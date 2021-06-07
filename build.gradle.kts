@@ -1,11 +1,10 @@
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 
 plugins {
-    kotlin("multiplatform") version "1.4.20"
-    kotlin("plugin.serialization") version "1.4.20"
+    kotlin("multiplatform") version "1.5.10"
+    kotlin("plugin.serialization") version "1.5.10"
 
-    id("org.jlleitschuh.gradle.ktlint") version "9.4.0"
-    id("com.squareup.sqldelight") version "1.4.3"
+    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
     id("com.palantir.git-version") version "0.12.3"
 
     application
@@ -64,7 +63,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
             }
         }
         val commonTest by getting {
@@ -75,13 +74,13 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-auth:1.4.1")
-                implementation("io.ktor:ktor-serialization:1.4.1")
-                implementation("io.ktor:ktor-server-netty:1.4.1")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+                implementation("io.ktor:ktor-auth:1.6.0")
+                implementation("io.ktor:ktor-serialization:1.6.0")
+                implementation("io.ktor:ktor-server-netty:1.6.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
 
                 implementation("org.jsoup:jsoup:1.13.1")
-                implementation("com.squareup.sqldelight:sqlite-driver:1.4.3")
+                implementation("org.xerial:sqlite-jdbc:3.34.0")
                 implementation("ch.qos.logback:logback-classic:1.2.3")
 
                 implementation("tkngch:bookmark-scorer:1.8.0")
@@ -144,6 +143,7 @@ tasks.withType<Test> {
     testLogging.showCauses = true
     testLogging.showExceptions = true
     testLogging.showStackTraces = true
+    testLogging.showStandardStreams = true
     testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 }
 
@@ -153,12 +153,6 @@ ktlint {
     enableExperimentalRules.set(true)
     filter {
         exclude { element -> element.file.path.contains("generated/") }
-    }
-}
-
-sqldelight {
-    database("Database") {
-        packageName = "tkngch.bookmarkManager.jvm.database"
     }
 }
 

@@ -9,8 +9,8 @@ import tkngch.bookmarkManager.common.model.URL
 import tkngch.bookmarkManager.common.model.Username
 import tkngch.bookmarkManager.common.model.Visibility
 import tkngch.bookmarkManager.common.model.VisitLog
-import tkngch.bookmarkManager.jvm.adapter.BookmarkRepository
-import tkngch.bookmarkManager.jvm.adapter.WebScraping
+import tkngch.bookmarkManager.jvm.domain.BookmarkRepository
+import tkngch.bookmarkManager.jvm.domain.WebpageInfoFactory
 import tkngch.bookmarkManager.jvm.domain.make
 import java.time.Instant
 
@@ -41,7 +41,7 @@ interface BookmarkService {
 
 class BookmarkServiceImpl(
     private val bookmarkRepo: BookmarkRepository,
-    private val webScraper: WebScraping
+    private val webScraper: WebpageInfoFactory
 ) : BookmarkService {
 
     override fun createBookmark(user: Username, url: URL, tags: List<Tag>) {

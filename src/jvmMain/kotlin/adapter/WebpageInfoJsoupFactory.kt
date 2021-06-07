@@ -2,15 +2,10 @@ package tkngch.bookmarkManager.jvm.adapter
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import tkngch.bookmarkManager.jvm.domain.WebpageInfo
+import tkngch.bookmarkManager.jvm.domain.WebpageInfoFactory
 
-data class WebpageInfo(val title: String, val url: String)
-
-interface WebScraping {
-
-    fun webpageInfo(url: String): WebpageInfo
-}
-
-class WebScrapingImpl : WebScraping {
+class WebpageInfoJsoupFactory : WebpageInfoFactory {
     companion object {
         // Use the user-agent of well-known web-crawler, to skip the cookie consent page. Here, we
         // use the user-agent of Googlebot, taken from
