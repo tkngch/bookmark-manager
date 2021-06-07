@@ -10,7 +10,7 @@ import tkngch.bookmarkManager.common.model.TagName
 import tkngch.bookmarkManager.common.model.Username
 import tkngch.bookmarkManager.common.model.Visibility
 import tkngch.bookmarkManager.common.model.VisitLog
-import tkngch.bookmarkManager.jvm.adapter.BookmarkRepository
+import tkngch.bookmarkManager.jvm.domain.BookmarkRepository
 import tkngch.bookmarkManager.jvm.domain.BookmarkScore
 import tkngch.bookmarkManager.jvm.service.ScoringServiceImpl
 import java.time.Instant

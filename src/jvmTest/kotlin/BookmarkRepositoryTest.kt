@@ -1,25 +1,27 @@
 package tkngch.bookmarkManager.jvm.adapter
 
-import com.squareup.sqldelight.sqlite.driver.JdbcSqliteDriver
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import tkngch.bookmarkManager.common.model.Bookmark
 import tkngch.bookmarkManager.common.model.Tag
 import tkngch.bookmarkManager.common.model.Visibility
 import tkngch.bookmarkManager.jvm.domain.BookmarkScore
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BookmarkRepositoryTest {
 
-    private val repo: BookmarkRepositoryImpl
+    private val repo: BookmarkJdbcSqliteRepository
     init {
-        val driver = JdbcSqliteDriver("jdbc:sqlite::memory:")
-        repo = BookmarkRepositoryImpl(driver)
+        val dataSource = SQLiteConnectionPoolDataSource()
+        dataSource.url = "jdbc:sqlite::memory:"
+        val connectionPool = dataSource.pooledConnection
+        repo = BookmarkJdbcSqliteRepository(connectionPool)
     }
     private val datetime = "2020-10-11T00:00:00Z"
 
@@ -364,8 +366,8 @@ class BookmarkRepositoryTest {
 
             val bookmarksWithOldScore = repo.bookmarks(username, tagIds = listOf())
             assertEquals(
-                bookmarksWithOldScore.map { it.id },
-                oldScores.sortedByDescending { it.score }.map { it.bookmarkId }
+                oldScores.sortedByDescending { it.score }.map { it.bookmarkId },
+                bookmarksWithOldScore.map { it.id }
             )
 
             val newScores = oldScores.map { it.copy(score = 1.0 / it.score) }
@@ -377,8 +379,8 @@ class BookmarkRepositoryTest {
 
             val bookmarksWithNewScore = repo.bookmarks(username, tagIds = listOf())
             assertEquals(
-                bookmarksWithNewScore.map { it.id },
-                newScores.sortedByDescending { it.score }.map { it.bookmarkId }
+                newScores.sortedByDescending { it.score }.map { it.bookmarkId },
+                bookmarksWithNewScore.map { it.id }
             )
         }
 

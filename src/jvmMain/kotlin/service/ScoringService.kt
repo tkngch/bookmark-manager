@@ -1,14 +1,13 @@
 package tkngch.bookmarkManager.jvm.service
 
 import tkngch.bookmarkManager.common.model.Username
-import tkngch.bookmarkManager.jvm.adapter.BookmarkRepository
+import tkngch.bookmarkManager.jvm.domain.BookmarkRepository
 import tkngch.bookmarkManager.jvm.domain.BookmarkScore
 import tkngch.bookmarkScorer.domain.VisitInstant
 import tkngch.bookmarkScorer.domain.Visits
 import java.time.Instant
 
 interface ScoringService {
-
     fun updateScores(user: Username)
 }
 
@@ -21,12 +20,12 @@ class ScoringServiceImpl(
 
         val visits = Visits(
             records =
-                visitLogs.map { log ->
-                    VisitInstant(
-                        bookmarkId = log.bookmarkId,
-                        instant = Instant.parse(log.visitedAt)
-                    )
-                }
+            visitLogs.map { log ->
+                VisitInstant(
+                    bookmarkId = log.bookmarkId,
+                    instant = Instant.parse(log.visitedAt)
+                )
+            }
         )
 
         val scores = visits.inferDailyCounts().asIterable().map { entry ->
