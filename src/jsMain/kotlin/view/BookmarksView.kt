@@ -25,6 +25,7 @@ import org.w3c.dom.events.Event
 import tkngch.bookmarkManager.common.model.Bookmark
 import tkngch.bookmarkManager.common.model.Tag
 import tkngch.bookmarkManager.js.binder.BookmarkBinder
+import kotlin.js.Date
 
 interface BookmarksView {
     val containerDiv: HTMLDivElement
@@ -89,6 +90,7 @@ class BookmarksViewImpl(private val title: String) : BookmarksView {
 
     private fun makeBookmarkView(bookmark: Bookmark): HTMLDivElement = document.create.div {
         val divId = bookmark.id
+        val today = Date(Date.now())
 
         div {
             classes = setOf("border", "p-2", "my-1")
@@ -118,7 +120,17 @@ class BookmarksViewImpl(private val title: String) : BookmarksView {
 
             div {
                 style = "cursor: pointer"
-                h6 { +bookmark.title }
+
+                h6 {
+                    if (Date(bookmark.createdAt).toDateString() == today.toDateString()) {
+                        span {
+                            +"NEW! "
+                            classes = setOf("text-primary")
+                        }
+                    }
+
+                    +bookmark.title
+                }
                 span { +bookmark.url }
 
                 onClickFunction = { _ -> this@BookmarksViewImpl.binder.onClick.trigger(bookmark) }

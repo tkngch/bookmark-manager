@@ -10,7 +10,7 @@ import tkngch.bookmarkManager.common.model.Username
 import tkngch.bookmarkManager.common.model.Visibility
 import tkngch.bookmarkManager.common.model.VisitLog
 import tkngch.bookmarkManager.jvm.domain.BookmarkRepository
-import tkngch.bookmarkManager.jvm.domain.WebpageInfoFactory
+import tkngch.bookmarkManager.jvm.domain.WebpageInfo
 import tkngch.bookmarkManager.jvm.domain.make
 import java.time.Instant
 
@@ -39,14 +39,13 @@ interface BookmarkService {
     fun logBookmarkVisit(user: Username, bookmarkId: BookmarkId)
 }
 
-class BookmarkServiceImpl(
-    private val bookmarkRepo: BookmarkRepository,
-    private val webScraper: WebpageInfoFactory
-) : BookmarkService {
+class BookmarkServiceImpl(private val bookmarkRepo: BookmarkRepository) : BookmarkService {
 
     override fun createBookmark(user: Username, url: URL, tags: List<Tag>) {
-        val info = webScraper.webpageInfo(url)
-        bookmarkRepo.addNewBookmark(user, Bookmark.make(info.title, info.url, tags))
+        val defaultTitle = "Untitled Bookmark: ${Instant.now()}"
+        val bookmark = Bookmark.make(defaultTitle, url, tags)
+        bookmarkRepo.addNewBookmark(user, bookmark)
+        this.refreshBookmark(user, bookmark.id)
     }
 
     override fun createTag(user: Username, tagName: TagName, visibility: Visibility) =
@@ -54,7 +53,7 @@ class BookmarkServiceImpl(
 
     override fun refreshBookmark(user: Username, bookmarkId: BookmarkId) =
         bookmarkRepo.bookmark(user, bookmarkId) ?.let { bookmark ->
-            val info = webScraper.webpageInfo(bookmark.url)
+            val info = WebpageInfo.make(bookmark.url)
             val newBookmark = Bookmark(
                 id = bookmark.id,
                 title = info.title,
