@@ -106,7 +106,7 @@ kotlin {
 }
 
 application {
-    mainClassName = "io.ktor.server.netty.EngineMain"
+    mainClass.set("io.ktor.server.netty.EngineMain")
 }
 
 tasks.getByName<KotlinWebpack>("jsBrowserProductionWebpack") {
@@ -127,6 +127,7 @@ tasks.getByName<Jar>("jvmJar") {
 tasks.getByName<JavaExec>("run") {
     dependsOn(tasks.getByName<Jar>("jvmJar"))
     classpath(tasks.getByName<Jar>("jvmJar"))
+    systemProperty("java.library.path", file("libtorch/lib").absolutePath)
 }
 
 tasks.withType<Test> {

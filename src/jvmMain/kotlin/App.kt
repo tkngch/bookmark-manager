@@ -42,7 +42,6 @@ import tkngch.bookmarkManager.common.model.PayloadTagDelete
 import tkngch.bookmarkManager.common.model.PayloadTagUpdate
 import tkngch.bookmarkManager.common.model.TagId
 import tkngch.bookmarkManager.jvm.adapter.BookmarkJdbcSqliteRepository
-import tkngch.bookmarkManager.jvm.adapter.WebpageInfoJsoupFactory
 import tkngch.bookmarkManager.jvm.configuration.AppEnv
 import tkngch.bookmarkManager.jvm.configuration.Configuration
 import tkngch.bookmarkManager.jvm.service.BookmarkService
@@ -69,8 +68,7 @@ fun Application.module() {
     val connectionPool = dataSource.pooledConnection
     val repository = BookmarkJdbcSqliteRepository(connectionPool)
 
-    val webScraper = WebpageInfoJsoupFactory()
-    val bookmarkService = BookmarkServiceImpl(repository, webScraper)
+    val bookmarkService = BookmarkServiceImpl(repository)
     val scoringService = ScoringServiceImpl(repository)
     module(config.userTable, bookmarkService, scoringService)
 }
