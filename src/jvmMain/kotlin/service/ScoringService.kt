@@ -31,6 +31,6 @@ class ScoringServiceImpl(
         val scores = visits.inferDailyCounts().asIterable().map { entry ->
             BookmarkScore.make(bookmarkId = entry.key, score = entry.value)
         }
-        scores.forEach { bookmarkRepo.addOrUpdateScore(it) }
+        bookmarkRepo.addOrUpdateScores(scores)
     }
 }

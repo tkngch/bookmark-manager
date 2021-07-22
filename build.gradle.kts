@@ -90,6 +90,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-junit"))
                 implementation("org.junit.jupiter:junit-jupiter:5.4.2")
+                implementation("io.mockk:mockk:1.12.0")
             }
         }
         val jsMain by getting {

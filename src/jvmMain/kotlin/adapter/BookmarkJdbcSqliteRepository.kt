@@ -172,9 +172,9 @@ class BookmarkJdbcSqliteRepository(
             }
         }
 
-    override fun addOrUpdateScore(score: BookmarkScore) {
+    override fun addOrUpdateScores(scores: List<BookmarkScore>) {
         this.connectionPool.connection.use { connection ->
-            Mutation.upsertScore(score, connection)
+            scores.forEach { score -> Mutation.upsertScore(score, connection) }
         }
     }
 

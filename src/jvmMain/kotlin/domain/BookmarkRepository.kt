@@ -39,5 +39,5 @@ interface BookmarkRepository {
     fun deleteTag(user: Username, id: TagId)
 
     fun visitLogs(user: Username): List<VisitLog>
-    fun addOrUpdateScore(score: BookmarkScore)
+    fun addOrUpdateScores(scores: List<BookmarkScore>)
 }
