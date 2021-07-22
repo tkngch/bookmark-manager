@@ -99,10 +99,10 @@ fun Application.module(
     install(Routing)
 
     launch {
-        val oneDayInSeconds: Long = 24 * 60 * 60
+        val oneDayInMilliSeconds: Long = 24 * 60 * 60 * 1000
         while (true) {
             userTable.table.keys.forEach { scoringService.updateScores(it) }
-            delay(oneDayInSeconds)
+            delay(oneDayInMilliSeconds)
         }
     }
 
