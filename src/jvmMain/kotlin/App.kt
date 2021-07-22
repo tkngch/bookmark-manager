@@ -30,6 +30,7 @@ import io.ktor.routing.put
 import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.serialization.json
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.sqlite.javax.SQLiteConnectionPoolDataSource
 import tkngch.bookmarkManager.common.model.PayloadBookmarkCreate
@@ -89,6 +90,7 @@ fun Application.module(
     install(StatusPages) {
         exception<Throwable> { cause ->
             call.respond(HttpStatusCode.InternalServerError, cause.localizedMessage)
+            cause.printStackTrace()
             throw cause
         }
     }
@@ -96,11 +98,17 @@ fun Application.module(
     install(DefaultHeaders)
     install(Routing)
 
+    launch {
+        val oneDayInSeconds: Long = 24 * 60 * 60
+        while (true) {
+            userTable.table.keys.forEach { scoringService.updateScores(it) }
+            delay(oneDayInSeconds)
+        }
+    }
+
     routing {
         authenticate {
             get("/") {
-                val principal: UserIdPrincipal? = call.authentication.principal()
-                principal ?.let { launch { scoringService.updateScores(it.name) } }
                 call.respondText(
                     this::class.java.classLoader.getResource("index.html")!!.readText(),
                     ContentType.Text.Html

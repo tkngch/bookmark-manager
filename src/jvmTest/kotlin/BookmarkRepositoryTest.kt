@@ -362,7 +362,7 @@ class BookmarkRepositoryTest {
             val oldScores = bookmarks.withIndex().map {
                 BookmarkScore.make(bookmarkId = it.value.id, score = it.index / 10.0)
             }
-            oldScores.forEach { repo.addOrUpdateScore(it) }
+            repo.addOrUpdateScores(oldScores)
 
             val bookmarksWithOldScore = repo.bookmarks(username, tagIds = listOf())
             assertEquals(
@@ -371,7 +371,7 @@ class BookmarkRepositoryTest {
             )
 
             val newScores = oldScores.map { it.copy(score = 1.0 / it.score) }
-            newScores.forEach { repo.addOrUpdateScore(it) }
+            repo.addOrUpdateScores(newScores)
             assertNotEquals(
                 oldScores.sortedByDescending { it.score }.map { it.bookmarkId },
                 newScores.sortedByDescending { it.score }.map { it.bookmarkId }
@@ -414,7 +414,7 @@ class BookmarkRepositoryTest {
             val oldScores = bookmarks.withIndex().map {
                 BookmarkScore.make(bookmarkId = it.value.id, score = it.index / 10.0)
             }
-            oldScores.forEach { repo.addOrUpdateScore(it) }
+            repo.addOrUpdateScores(oldScores)
 
             val bookmarksWithOldScore = repo.bookmarks(username, tagIds = listOf(tag.id))
             assertEquals(
@@ -423,7 +423,7 @@ class BookmarkRepositoryTest {
             )
 
             val newScores = oldScores.map { it.copy(score = 1.0 / it.score) }
-            newScores.forEach { repo.addOrUpdateScore(it) }
+            repo.addOrUpdateScores(newScores)
             assertNotEquals(
                 oldScores.sortedByDescending { it.score }.map { it.bookmarkId },
                 newScores.sortedByDescending { it.score }.map { it.bookmarkId }
